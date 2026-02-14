@@ -18,10 +18,7 @@ export class SessionsStore extends Model({
     return ['sessions']
   }
 
-  @modelAction
-  setSessions(sessions: SessionRow[]) {
-    this.sessions = sessions
-  }
+  // ─── Lifecycle ───────────────────────────────────────────────
 
   async open() {
     this.cancelWhen = when(
@@ -33,6 +30,13 @@ export class SessionsStore extends Model({
   close() {
     this.cancelWhen?.()
     this.cancelWhen = null
+  }
+
+  // ─── Data ────────────────────────────────────────────────────
+
+  @modelAction
+  setSessions(sessions: SessionRow[]) {
+    this.sessions = sessions
   }
 
   private load() {

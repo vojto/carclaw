@@ -46,6 +46,8 @@ export class ChatStore extends Model({
     return getRoot<RootStore>(this)
   }
 
+  // ─── Lifecycle ───────────────────────────────────────────────
+
   open(sessionKey: string) {
     this.close()
     this.cancelWhen = when(
@@ -62,6 +64,8 @@ export class ChatStore extends Model({
       this.unsubscribe = null
     }
   }
+
+  // ─── Data ────────────────────────────────────────────────────
 
   private load(sessionKey: string) {
     const client = this.root.client
@@ -104,6 +108,17 @@ export class ChatStore extends Model({
     })
   }
 
+  // ─── Recording ───────────────────────────────────────────────
+
+  @modelAction
+  toggleRecording() {
+    if (this.recording) {
+      this.stopRecordingAndSend()
+    } else {
+      this.startRecording()
+    }
+  }
+
   async startRecording() {
     this.recorder = new AudioRecorder()
     await this.recorder.start()
@@ -135,16 +150,6 @@ export class ChatStore extends Model({
       await client.sendMessage(sessionKey, text.trim())
     } finally {
       this.setTranscribing(false)
-    }
-  }
-
-  @modelAction
-  toggleRecording() {
-    // Actual async work delegated outside modelAction
-    if (this.recording) {
-      this.stopRecordingAndSend()
-    } else {
-      this.startRecording()
     }
   }
 }

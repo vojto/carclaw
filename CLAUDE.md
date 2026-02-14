@@ -26,10 +26,16 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
 ## Navigation
 
-- Keep small enums co-located with the store that uses them.
-- The current screen is tracked by `RootStore.screen`.
-- `app.tsx` switches on the screen value to render the correct screen component.
+- The current route is a **discriminated union** (`Route` type) stored in `RootStore.route`. Some routes carry arguments (e.g. `{ type: 'chat'; sessionKey: string }`).
+- `app.tsx` switches on `route.type` to render the correct screen component.
 - Screen components live in `src/screens/`.
+- The route is persisted to `localStorage`, so the app reopens to the last screen.
+
+## Code Organization
+
+- **Group methods in classes** using `// ─── Group Name ───` comment separators. This applies to all classes (stores, clients, etc.).
+- **Lifecycle goes first** — `open()`/`close()`, `connect()`/`disconnect()`, or similar mount/unmount pairs always appear as the first group.
+- Other groups depend on the class (e.g. Data, Recording, Authentication, Internal). Keep groups logical and consistent.
 
 ## Naming Conventions
 
@@ -61,6 +67,11 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
 - **Keep React components thin.** `useEffect` hooks should just call a method on the store — all real logic (fetching, subscriptions, data transforms) lives in the mobx-keystone stores.
 - Components render store state and invoke store actions. That's it.
+
+### Waiting for Async Conditions
+
+- Use `when()` from `mobx` to wait for an observable to become truthy. It fires immediately if the condition is already met, or waits until it is. Returns a disposer for cancellation.
+- Example: a store's `open()` waits for `root.connected` before loading data. If the screen unmounts first, `close()` cancels the `when`.
 
 ### mobx-keystone Conventions
 

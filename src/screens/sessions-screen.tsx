@@ -9,8 +9,7 @@ export const SessionsScreen = observer(function SessionsScreen() {
   const { sessionsStore } = store
 
   useEffect(() => {
-    sessionsStore.open()
-    return () => sessionsStore.close()
+    sessionsStore.syncFromServer()
   }, [sessionsStore])
 
   const handleSelect = (key: string) => {

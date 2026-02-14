@@ -7,43 +7,51 @@ import { Header } from '../components/header'
 
 export const ChatScreen = observer(function ChatScreen() {
   const store = useStore()
-  const { chatStore } = store
   const sessionKey = store.route.type === 'chat' ? store.route.sessionKey : ''
+  const session = store.sessionsStore.findSession(sessionKey)
 
   useEffect(() => {
-    if (!sessionKey) return
-    chatStore.open(sessionKey)
-    return () => chatStore.close()
-  }, [chatStore, sessionKey])
+    if (!session) return
+    session.loadHistory()
+  }, [session])
+
+  if (!session) {
+    return (
+      <div className="min-h-screen p-12 flex flex-col gap-8">
+        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
+        <div className="text-3xl text-gray-400">Session not found</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen p-12 flex flex-col gap-8">
       <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
 
-      {chatStore.loading && !chatStore.lastAssistantText && (
+      {session.loading && !session.lastAssistantText && (
         <div className="text-3xl text-gray-400">Loading...</div>
       )}
 
-      {chatStore.lastAssistantText && (
+      {session.lastAssistantText && (
         <div className="text-3xl text-gray-200 leading-relaxed prose prose-invert prose-2xl max-w-none">
-          <Markdown>{chatStore.lastAssistantText}</Markdown>
+          <Markdown>{session.lastAssistantText}</Markdown>
         </div>
       )}
 
       <button
-        onClick={() => chatStore.toggleRecording()}
-        disabled={chatStore.transcribing}
+        onClick={() => session.toggleRecording()}
+        disabled={session.transcribing}
         className={`fixed bottom-8 left-8 w-32 h-32 text-white rounded-full shadow-sm flex items-center justify-center cursor-pointer ${
-          chatStore.transcribing
+          session.transcribing
             ? 'bg-gray-600'
-            : chatStore.recording
+            : session.recording
               ? 'bg-white active:bg-gray-300'
               : 'bg-red-500 active:bg-red-700'
         }`}
       >
-        {chatStore.transcribing ? (
+        {session.transcribing ? (
           <Loader size={56} className="animate-spin" />
-        ) : chatStore.recording ? (
+        ) : session.recording ? (
           <Square size={40} fill="black" color="black" />
         ) : (
           <Mic size={56} />

@@ -1,6 +1,5 @@
 import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
-import { when } from 'mobx'
-import { ChatEventPayloadSchema } from '../lib/claw-client'
+import type { ChatEventPayload } from '../lib/claw-client'
 import { AudioRecorder } from '../lib/audio-recorder'
 import type { RootStore } from './root-store'
 
@@ -31,53 +30,65 @@ async function speak(text: string) {
   await audio.play()
 }
 
-@model('carclaw/ChatStore')
-export class ChatStore extends Model({
+@model('carclaw/Session')
+export class Session extends Model({
+  key: prop<string>(),
+  displayName: prop<string>(''),
+  derivedTitle: prop<string>(''),
+  lastMessagePreview: prop<string>(''),
+  lastAssistantText: prop<string>(''),
+  updatedAt: prop<string>(''),
   loading: prop<boolean>(false).withSetter(),
-  lastAssistantText: prop<string>('').withSetter(),
   recording: prop<boolean>(false).withSetter(),
   transcribing: prop<boolean>(false).withSetter(),
 }) {
-  private unsubscribe: (() => void) | null = null
-  private cancelWhen: (() => void) | null = null
   private recorder: AudioRecorder | null = null
 
   persistKeys() {
-    return ['lastAssistantText']
+    return ['key', 'displayName', 'derivedTitle', 'lastMessagePreview', 'lastAssistantText', 'updatedAt']
   }
 
   private get root(): RootStore {
     return getRoot<RootStore>(this)
   }
 
-  // ─── Lifecycle ───────────────────────────────────────────────
+  // ─── Server Sync ───────────────────────────────────────────
 
-  open(sessionKey: string) {
-    this.close()
-    this.cancelWhen = when(
-      () => this.root.connected,
-      () => this.load(sessionKey),
-    )
+  @modelAction
+  mergeFromServer(data: { displayName?: string; derivedTitle?: string; lastMessagePreview?: string; updatedAt?: string }) {
+    if (data.displayName !== undefined) this.displayName = data.displayName
+    if (data.derivedTitle !== undefined) this.derivedTitle = data.derivedTitle
+    if (data.lastMessagePreview !== undefined) this.lastMessagePreview = data.lastMessagePreview
+    if (data.updatedAt !== undefined) this.updatedAt = data.updatedAt
   }
 
-  close() {
-    this.cancelWhen?.()
-    this.cancelWhen = null
-    if (this.unsubscribe) {
-      this.unsubscribe()
-      this.unsubscribe = null
+  // ─── Chat Events ──────────────────────────────────────────
+
+  @modelAction
+  handleChatEvent(payload: ChatEventPayload) {
+    if (payload.state === 'delta' || payload.state === 'final') {
+      const text = extractText(payload.message)
+      if (text) {
+        this.lastAssistantText = text
+        this.lastMessagePreview = text.slice(0, 100)
+      }
+    }
+
+    if (payload.state === 'final') {
+      const text = extractText(payload.message)
+      if (text) speak(text)
     }
   }
 
-  // ─── Data ────────────────────────────────────────────────────
+  // ─── History ──────────────────────────────────────────────
 
-  private async load(sessionKey: string) {
+  async loadHistory() {
     const client = this.root.client
     if (!client) return
 
     this.setLoading(true)
     try {
-      const res = await client.chatHistory(sessionKey)
+      const res = await client.chatHistory(this.key)
       const lastAssistant = [...res.messages]
         .reverse()
         .find((m) => m.role === 'assistant')
@@ -89,30 +100,14 @@ export class ChatStore extends Model({
     } finally {
       this.setLoading(false)
     }
-
-    // Subscribe to live chat events
-    this.unsubscribe = client.on('chat', (raw) => {
-      const parsed = ChatEventPayloadSchema.safeParse(raw)
-      if (!parsed.success) return
-      const payload = parsed.data
-      if (payload.sessionKey !== sessionKey) return
-
-      if (payload.state === 'delta' || payload.state === 'final') {
-        const text = extractText(payload.message)
-        if (text) {
-          this.setLastAssistantText(text)
-        }
-      }
-
-      // Speak the final response
-      if (payload.state === 'final') {
-        const text = extractText(payload.message)
-        if (text) speak(text)
-      }
-    })
   }
 
-  // ─── Recording ───────────────────────────────────────────────
+  @modelAction
+  private setLastAssistantText(text: string) {
+    this.lastAssistantText = text
+  }
+
+  // ─── Recording ────────────────────────────────────────────
 
   @modelAction
   toggleRecording() {
@@ -147,11 +142,10 @@ export class ChatStore extends Model({
       const { text } = (await res.json()) as { text: string }
       if (!text?.trim()) return
 
-      const sessionKey = this.root.selectedSessionKey
       const client = this.root.client
-      if (!sessionKey || !client) return
+      if (!client) return
 
-      await client.sendMessage(sessionKey, text.trim())
+      await client.sendMessage(this.key, text.trim())
     } finally {
       this.setTranscribing(false)
     }

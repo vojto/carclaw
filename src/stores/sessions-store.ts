@@ -1,15 +1,13 @@
 import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
-import { when } from 'mobx'
 import type { SessionRow } from '../lib/claw-client'
 import type { RootStore } from './root-store'
+import { Session } from './session'
 
 @model('carclaw/SessionsStore')
 export class SessionsStore extends Model({
   loading: prop<boolean>(false).withSetter(),
-  sessions: prop<SessionRow[]>(() => []),
+  sessions: prop<Session[]>(() => []),
 }) {
-  private cancelWhen: (() => void) | null = null
-
   private get root(): RootStore {
     return getRoot<RootStore>(this)
   }
@@ -18,35 +16,47 @@ export class SessionsStore extends Model({
     return ['sessions']
   }
 
-  // ─── Lifecycle ───────────────────────────────────────────────
+  // ─── Lookup ────────────────────────────────────────────────
 
-  async open() {
-    this.cancelWhen = when(
-      () => this.root.connected,
-      () => this.load(),
-    )
+  findSession(key: string): Session | undefined {
+    return this.sessions.find((s) => s.key === key)
   }
 
-  close() {
-    this.cancelWhen?.()
-    this.cancelWhen = null
-  }
-
-  // ─── Data ────────────────────────────────────────────────────
+  // ─── Server Sync ──────────────────────────────────────────
 
   @modelAction
-  setSessions(sessions: SessionRow[]) {
-    this.sessions = sessions
+  syncFromServerData(serverSessions: SessionRow[]) {
+    for (const row of serverSessions) {
+      const existing = this.sessions.find((s) => s.key === row.key)
+      if (existing) {
+        existing.mergeFromServer({
+          displayName: row.displayName ?? '',
+          derivedTitle: row.derivedTitle ?? '',
+          lastMessagePreview: row.lastMessagePreview ?? '',
+          updatedAt: row.updatedAt != null ? String(row.updatedAt) : '',
+        })
+      } else {
+        this.sessions.push(
+          new Session({
+            key: row.key,
+            displayName: row.displayName ?? '',
+            derivedTitle: row.derivedTitle ?? '',
+            lastMessagePreview: row.lastMessagePreview ?? '',
+            updatedAt: row.updatedAt != null ? String(row.updatedAt) : '',
+          }),
+        )
+      }
+    }
   }
 
-  private async load() {
+  async syncFromServer() {
     const client = this.root.client
     if (!client) return
 
     this.setLoading(true)
     try {
       const res = await client.listSessions()
-      this.setSessions(res.sessions)
+      this.syncFromServerData(res.sessions)
     } catch (err) {
       console.error('[sessions] failed to load:', err)
     } finally {

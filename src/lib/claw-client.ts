@@ -146,7 +146,7 @@ export class ClawClient {
         maxProtocol: 3,
         client: {
           id: 'gateway-client',
-          displayName: 'Carclaw',
+          displayName: '',
           version: '0.1.0',
           platform: 'web',
           mode: 'backend',

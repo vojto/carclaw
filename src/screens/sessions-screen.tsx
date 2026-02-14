@@ -32,7 +32,7 @@ export const SessionsScreen = observer(function SessionsScreen() {
     <div className="min-h-screen p-12 flex flex-col gap-8">
       <Title>Sessions</Title>
 
-      {sessionsStore.loading && (
+      {sessionsStore.loading && sessionsStore.sessions.length === 0 && (
         <div className="text-3xl text-gray-400">Loading...</div>
       )}
 

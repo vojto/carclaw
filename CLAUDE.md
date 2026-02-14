@@ -22,6 +22,7 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 - Rounded corners on interactive elements (`rounded-2xl` for buttons).
 - No tiny controls, no dense layouts. Every tap target should be easy to hit without looking.
 - **No hover states** — this is a touchscreen. Only use `active:` for press feedback.
+- **No loading flicker.** Only show a loading indicator when there's nothing else to display. If stale data exists, keep showing it while refreshing in the background.
 
 ## Navigation
 

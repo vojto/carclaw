@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
-import { runInAction } from 'mobx'
 import { useStore } from '../stores/store-context'
 import { Screen } from '../stores/root-store'
 import { Title } from '../components/title'
@@ -16,11 +15,10 @@ export const SessionsScreen = observer(function SessionsScreen() {
 
     sessionsStore.setLoading(true)
     client.listSessions().then((res) => {
-      runInAction(() => {
-        sessionsStore.sessions = res.sessions
-        sessionsStore.setLoading(false)
-      })
-    }).catch(() => {
+      sessionsStore.setSessions(res.sessions)
+      sessionsStore.setLoading(false)
+    }).catch((err) => {
+      console.error('[sessions] failed to load:', err)
       sessionsStore.setLoading(false)
     })
   }, [store, sessionsStore])

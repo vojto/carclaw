@@ -4,6 +4,8 @@ import { Screen } from './stores/root-store'
 import { WelcomeScreen } from './screens/welcome-screen'
 import { SetupScreen } from './screens/setup-screen'
 import { HomeScreen } from './screens/home-screen'
+import { SessionsScreen } from './screens/sessions-screen'
+import { ChatScreen } from './screens/chat-screen'
 
 const App = observer(function App() {
   const store = useStore()
@@ -15,6 +17,10 @@ const App = observer(function App() {
       return <SetupScreen />
     case Screen.Home:
       return <HomeScreen />
+    case Screen.Sessions:
+      return <SessionsScreen />
+    case Screen.Chat:
+      return <ChatScreen />
   }
 })
 

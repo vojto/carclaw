@@ -1,6 +1,42 @@
+import { z } from 'zod'
+
 const DEFAULT_URL = 'ws://127.0.0.1:18789'
 
 type EventHandler = (payload: unknown) => void
+
+// --- Zod schemas ---
+
+export const SessionRowSchema = z.object({
+  key: z.string(),
+  displayName: z.string().optional(),
+  derivedTitle: z.string().optional(),
+  lastMessagePreview: z.string().optional(),
+  updatedAt: z.string().optional(),
+  kind: z.string().optional(),
+})
+export type SessionRow = z.infer<typeof SessionRowSchema>
+
+const SessionsListResponseSchema = z.object({
+  sessions: z.array(SessionRowSchema),
+  count: z.number(),
+  ts: z.string().optional(),
+})
+
+const ContentBlockSchema = z.object({
+  type: z.string(),
+  text: z.string().optional(),
+})
+
+export const ChatMessageSchema = z.object({
+  role: z.string(),
+  content: z.array(ContentBlockSchema),
+})
+export type ChatMessage = z.infer<typeof ChatMessageSchema>
+
+const ChatHistoryResponseSchema = z.object({
+  sessionKey: z.string(),
+  messages: z.array(ChatMessageSchema),
+})
 
 interface PendingRequest {
   resolve: (payload: unknown) => void
@@ -121,6 +157,21 @@ export class ClawClient {
     }
     handlers.add(handler)
     return () => handlers!.delete(handler)
+  }
+
+  async listSessions() {
+    const raw = await this.request('sessions.list', {
+      includeLastMessage: true,
+      includeDerivedTitles: true,
+    })
+    return SessionsListResponseSchema.parse(raw)
+  }
+
+  async chatHistory(sessionKey: string, limit?: number) {
+    const params: Record<string, unknown> = { sessionKey }
+    if (limit !== undefined) params.limit = limit
+    const raw = await this.request('chat.history', params)
+    return ChatHistoryResponseSchema.parse(raw)
   }
 
   disconnect() {

@@ -1,10 +1,14 @@
 import { Model, model, prop, modelAction } from 'mobx-keystone'
 import { ClawClient } from '../lib/claw-client'
+import { SessionsStore } from './sessions-store'
+import { ChatStore } from './chat-store'
 
 export enum Screen {
   Welcome = 'welcome',
   Setup = 'setup',
   Home = 'home',
+  Sessions = 'sessions',
+  Chat = 'chat',
 }
 
 @model('carclaw/RootStore')
@@ -17,6 +21,9 @@ export class RootStore extends Model({
   connecting: prop<boolean>(false).withSetter(),
   connectError: prop<string>('').withSetter(),
   recordingVisible: prop<boolean>(false).withSetter(),
+  selectedSessionKey: prop<string>('').withSetter(),
+  sessionsStore: prop<SessionsStore>(() => new SessionsStore({})),
+  chatStore: prop<ChatStore>(() => new ChatStore({})),
 }) {
   client: ClawClient | null = null
 
@@ -36,7 +43,7 @@ export class RootStore extends Model({
   }
 
   persistKeys() {
-    return ['disclaimerAccepted', 'host', 'port', 'token']
+    return ['disclaimerAccepted', 'host', 'port', 'token', 'selectedSessionKey']
   }
 
   @modelAction
@@ -53,7 +60,7 @@ export class RootStore extends Model({
     try {
       await this.client.connect()
       this.setConnecting(false)
-      this.setScreen(Screen.Home)
+      this.setScreen(Screen.Sessions)
     } catch (err) {
       this.setConnecting(false)
       this.setConnectError(err instanceof Error ? err.message : 'Connection failed')

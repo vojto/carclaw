@@ -39,17 +39,18 @@ export class SessionsStore extends Model({
     this.sessions = sessions
   }
 
-  private load() {
+  private async load() {
     const client = this.root.client
     if (!client) return
 
     this.setLoading(true)
-    client.listSessions().then((res) => {
+    try {
+      const res = await client.listSessions()
       this.setSessions(res.sessions)
-      this.setLoading(false)
-    }).catch((err) => {
+    } catch (err) {
       console.error('[sessions] failed to load:', err)
+    } finally {
       this.setLoading(false)
-    })
+    }
   }
 }

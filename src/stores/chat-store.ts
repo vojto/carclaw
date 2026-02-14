@@ -67,24 +67,24 @@ export class ChatStore extends Model({
 
   // ─── Data ────────────────────────────────────────────────────
 
-  private load(sessionKey: string) {
+  private async load(sessionKey: string) {
     const client = this.root.client
     if (!client) return
 
     this.setLoading(true)
-
-    // Load latest assistant message from history
-    client.chatHistory(sessionKey).then((res) => {
+    try {
+      const res = await client.chatHistory(sessionKey)
       const lastAssistant = [...res.messages]
         .reverse()
         .find((m) => m.role === 'assistant')
       if (lastAssistant) {
         this.setLastAssistantText(extractText(lastAssistant))
       }
+    } catch {
+      // ignore — cached lastAssistantText is still displayed
+    } finally {
       this.setLoading(false)
-    }).catch(() => {
-      this.setLoading(false)
-    })
+    }
 
     // Subscribe to live chat events
     this.unsubscribe = client.on('chat', (raw) => {

@@ -10,6 +10,10 @@ function extractText(message?: { content: { type: string; text?: string }[] }): 
     .filter((b) => b.type === 'text' && b.text)
     .map((b) => b.text!)
     .join('\n')
+    .split('\n')
+    .filter((line) => !line.startsWith('MEDIA:'))
+    .join('\n')
+    .trim()
 }
 
 async function speak(text: string) {

@@ -4,6 +4,7 @@ import { Title } from '../components/title'
 import { Text } from '../components/text'
 import { BigButton } from '../components/big-button'
 import { TextInput } from '../components/text-input'
+import { Spinner } from '../components/spinner'
 
 export const SetupScreen = observer(function SetupScreen() {
   const store = useStore()
@@ -26,7 +27,10 @@ export const SetupScreen = observer(function SetupScreen() {
         <TextInput label="Port" value={store.port} placeholder="18789" onChange={(v) => store.setPort(v)} />
         <TextInput label="Token" value={store.token} placeholder="Enter your auth token" onChange={(v) => store.setToken(v)} />
       </div>
-      <Text className={statusColor}>{statusMessage}</Text>
+      <div className="flex items-center gap-4 h-12">
+        {store.connecting && <Spinner />}
+        <Text className={statusColor}>{statusMessage}</Text>
+      </div>
       <BigButton onClick={() => store.connect()}>Connect</BigButton>
     </div>
   )

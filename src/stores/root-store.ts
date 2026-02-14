@@ -30,10 +30,7 @@ export class RootStore extends Model({
     const url = `ws://${this.host}:${this.port}`
     this.client = new ClawClient(url, this.token)
     try {
-      await Promise.all([
-        this.client.connect(),
-        new Promise((r) => setTimeout(r, 1000)),
-      ])
+      await this.client.connect()
       this.setConnecting(false)
       this.setScreen(Screen.Home)
     } catch (err) {

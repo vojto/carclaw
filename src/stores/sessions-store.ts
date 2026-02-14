@@ -1,5 +1,5 @@
 import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
-import { reaction } from 'mobx'
+import { when } from 'mobx'
 import type { SessionRow } from '../lib/claw-client'
 import type { RootStore } from './root-store'
 
@@ -8,7 +8,7 @@ export class SessionsStore extends Model({
   loading: prop<boolean>(false).withSetter(),
   sessions: prop<SessionRow[]>(() => []),
 }) {
-  private disposeReaction: (() => void) | null = null
+  private cancelWhen: (() => void) | null = null
 
   private get root(): RootStore {
     return getRoot<RootStore>(this)
@@ -23,28 +23,16 @@ export class SessionsStore extends Model({
     this.sessions = sessions
   }
 
-  open() {
-    if (this.root.connected) {
-      this.load()
-      return
-    }
-
-    // Wait for connection, then load
-    this.disposeReaction = reaction(
+  async open() {
+    this.cancelWhen = when(
       () => this.root.connected,
-      (connected) => {
-        if (connected) {
-          this.load()
-          this.disposeReaction?.()
-          this.disposeReaction = null
-        }
-      },
+      () => this.load(),
     )
   }
 
   close() {
-    this.disposeReaction?.()
-    this.disposeReaction = null
+    this.cancelWhen?.()
+    this.cancelWhen = null
   }
 
   private load() {

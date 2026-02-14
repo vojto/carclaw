@@ -1,5 +1,5 @@
 import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
-import { reaction } from 'mobx'
+import { when } from 'mobx'
 import { ChatEventPayloadSchema } from '../lib/claw-client'
 import { AudioRecorder } from '../lib/audio-recorder'
 import type { RootStore } from './root-store'
@@ -35,7 +35,7 @@ export class ChatStore extends Model({
   transcribing: prop<boolean>(false).withSetter(),
 }) {
   private unsubscribe: (() => void) | null = null
-  private disposeReaction: (() => void) | null = null
+  private cancelWhen: (() => void) | null = null
   private recorder: AudioRecorder | null = null
 
   persistKeys() {
@@ -46,31 +46,17 @@ export class ChatStore extends Model({
     return getRoot<RootStore>(this)
   }
 
-  /** Load history + subscribe to live chat events for the given session. */
   open(sessionKey: string) {
     this.close()
-
-    if (this.root.connected) {
-      this.load(sessionKey)
-      return
-    }
-
-    // Wait for connection, then load
-    this.disposeReaction = reaction(
+    this.cancelWhen = when(
       () => this.root.connected,
-      (connected) => {
-        if (connected) {
-          this.load(sessionKey)
-          this.disposeReaction?.()
-          this.disposeReaction = null
-        }
-      },
+      () => this.load(sessionKey),
     )
   }
 
   close() {
-    this.disposeReaction?.()
-    this.disposeReaction = null
+    this.cancelWhen?.()
+    this.cancelWhen = null
     if (this.unsubscribe) {
       this.unsubscribe()
       this.unsubscribe = null

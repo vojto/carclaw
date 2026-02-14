@@ -11,7 +11,7 @@ export const SessionRowSchema = z.object({
   displayName: z.string().optional(),
   derivedTitle: z.string().optional(),
   lastMessagePreview: z.string().optional(),
-  updatedAt: z.string().optional(),
+  updatedAt: z.union([z.string(), z.number()]).optional(),
   kind: z.string().optional(),
 })
 export type SessionRow = z.infer<typeof SessionRowSchema>

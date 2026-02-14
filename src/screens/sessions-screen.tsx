@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../stores/store-context'
-import { Title } from '../components/title'
+import { Header } from '../components/header'
 import { ListItem } from '../components/list-item'
 
 export const SessionsScreen = observer(function SessionsScreen() {
@@ -19,7 +19,7 @@ export const SessionsScreen = observer(function SessionsScreen() {
 
   return (
     <div className="min-h-screen p-12 flex flex-col gap-8">
-      <Title>Sessions</Title>
+      <Header>Sessions</Header>
 
       {sessionsStore.loading && sessionsStore.sessions.length === 0 && (
         <div className="text-3xl text-gray-400">Loading...</div>

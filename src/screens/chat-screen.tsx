@@ -3,8 +3,7 @@ import { observer } from 'mobx-react-lite'
 import Markdown from 'react-markdown'
 import { Mic, Square, Loader } from 'lucide-react'
 import { useStore } from '../stores/store-context'
-import { Title } from '../components/title'
-import { BigButton } from '../components/big-button'
+import { Header } from '../components/header'
 
 export const ChatScreen = observer(function ChatScreen() {
   const store = useStore()
@@ -19,11 +18,7 @@ export const ChatScreen = observer(function ChatScreen() {
 
   return (
     <div className="min-h-screen p-12 flex flex-col gap-8">
-      <BigButton onClick={() => store.setRoute({ type: 'sessions' })}>
-        Back
-      </BigButton>
-
-      <Title>Chat</Title>
+      <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
 
       {chatStore.loading && !chatStore.lastAssistantText && (
         <div className="text-3xl text-gray-400">Loading...</div>

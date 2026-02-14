@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../stores/store-context'
-import { Title } from '../components/title'
+import { Header } from '../components/header'
 import { Text } from '../components/text'
 import { BigButton } from '../components/big-button'
 import { TextInput } from '../components/text-input'
@@ -21,7 +21,7 @@ export const SetupScreen = observer(function SetupScreen() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-12 gap-10">
-      <Title>Connect</Title>
+      <Header>Connect</Header>
       <div className="flex flex-col gap-6 w-full max-w-2xl">
         <TextInput label="Gateway Host" value={store.host} placeholder="127.0.0.1" onChange={(v) => store.setHost(v)} />
         <TextInput label="Port" value={store.port} placeholder="18789" onChange={(v) => store.setPort(v)} />

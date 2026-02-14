@@ -1,4 +1,5 @@
 import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
+import { when } from 'mobx'
 import type { ChatEventPayload } from '../lib/claw-client'
 import { AudioRecorder } from '../lib/audio-recorder'
 import type { RootStore } from './root-store'
@@ -111,6 +112,8 @@ export class Session extends Model({
   // ─── History ──────────────────────────────────────────────
 
   async loadHistory() {
+    await when(() => this.root.connected)
+
     const client = this.root.client
     if (!client) return
 

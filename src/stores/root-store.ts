@@ -20,7 +20,6 @@ export class RootStore extends Model({
   token: prop<string>('').withSetter(),
   connecting: prop<boolean>(false).withSetter(),
   connectError: prop<string>('').withSetter(),
-  recordingVisible: prop<boolean>(false).withSetter(),
   selectedSessionKey: prop<string>('').withSetter(),
   sessionsStore: prop<SessionsStore>(() => new SessionsStore({})),
   chatStore: prop<ChatStore>(() => new ChatStore({})),

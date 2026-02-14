@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
+import Markdown from 'react-markdown'
+import { Mic } from 'lucide-react'
 import { useStore } from '../stores/store-context'
 import { Screen } from '../stores/root-store'
 import { Title } from '../components/title'
@@ -48,10 +50,14 @@ export const ChatScreen = observer(function ChatScreen() {
       )}
 
       {chatStore.lastAssistantText && (
-        <div className="text-3xl text-gray-200 leading-relaxed whitespace-pre-wrap">
-          {chatStore.lastAssistantText}
+        <div className="text-3xl text-gray-200 leading-relaxed prose prose-invert prose-2xl max-w-none">
+          <Markdown>{chatStore.lastAssistantText}</Markdown>
         </div>
       )}
+
+      <button className="fixed bottom-8 left-8 w-32 h-32 bg-red-500 active:bg-red-700 text-white rounded-full shadow-sm flex items-center justify-center cursor-pointer">
+        <Mic size={56} />
+      </button>
     </div>
   )
 })

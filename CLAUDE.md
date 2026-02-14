@@ -41,6 +41,8 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 - **Tailwind CSS** v4 (via `@tailwindcss/vite` plugin)
 - **mobx-keystone** for state management, **mobx-react-lite** for React bindings
 - **Lucide React** for icons
+- **Hono** for backend API (runs on Cloudflare Workers)
+- **Cloudflare Workers** for hosting (SPA + API in one deploy)
 - **pnpm** as package manager, **mise** for Node.js version management
 
 ## State Management
@@ -105,3 +107,12 @@ src/
 - `src/stores/` — mobx-keystone stores
 - `src/screens/` — top-level screen components
 - `src/components/` — reusable UI components
+- `worker/` — Hono backend API (Cloudflare Workers)
+
+## Backend (Cloudflare Workers)
+
+- The backend is a **Hono** app in `worker/index.ts`, deployed as a Cloudflare Worker.
+- All API routes live under `/api/*`. The worker handles these; everything else falls through to the SPA.
+- Config is in `wrangler.jsonc`. The `@cloudflare/vite-plugin` integrates the worker into `vite dev`.
+- `pnpm dev` starts both the SPA and the worker. `pnpm deploy` deploys to Cloudflare.
+- Worker has its own tsconfig (`tsconfig.worker.json`) with `@cloudflare/workers-types`.

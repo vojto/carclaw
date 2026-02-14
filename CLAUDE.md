@@ -1,6 +1,6 @@
 # Carclaw
 
-> **Keep this file up to date.** Whenever you learn something useful about this project — conventions, patterns, gotchas — update CLAUDE.md so future sessions benefit.
+> **Keep this file up to date.** Whenever you learn something useful about this project — conventions, patterns, gotchas — update CLAUDE.md so future sessions benefit. Notes should capture **general principles**, not specific implementation details. Good: "Keep small enums co-located with the view model that uses them." Bad: "The Screen enum lives in root-view-model.ts."
 
 Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
@@ -11,10 +11,11 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 - Dark background (`#000`), white text. Keep it high-contrast and glanceable.
 - Rounded corners on interactive elements (`rounded-2xl` for buttons).
 - No tiny controls, no dense layouts. Every tap target should be easy to hit without looking.
+- **No hover states** — this is a touchscreen. Only use `active:` for press feedback.
 
 ## Navigation
 
-- Screen navigation uses the `Screen` enum in `src/view-models/screen.ts`.
+- Keep small enums co-located with the view model that uses them.
 - The current screen is tracked by `RootViewModel.screen`.
 - `app.tsx` switches on the screen value to render the correct screen component.
 - Screen components live in `src/screens/`.
@@ -69,7 +70,6 @@ src/
     root-view-model.ts       # Root MobX view model
     recording-view-model.ts  # Recording state
     view-model-context.ts    # React context + useViewModel hook
-    screen.ts                # Screen enum
   screens/
     welcome-screen.tsx       # Disclaimer / acceptance screen
     home-screen.tsx          # Main screen with mic button

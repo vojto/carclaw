@@ -1,6 +1,10 @@
 import { action, makeObservable, observable } from 'mobx'
 import { RecordingViewModel } from './recording-view-model'
-import { Screen } from './screen'
+
+export enum Screen {
+  Welcome = 'welcome',
+  Home = 'home',
+}
 
 export class RootViewModel {
   @observable screen = Screen.Welcome

@@ -19,7 +19,7 @@ export type SessionRow = z.infer<typeof SessionRowSchema>
 const SessionsListResponseSchema = z.object({
   sessions: z.array(SessionRowSchema),
   count: z.number(),
-  ts: z.string().optional(),
+  ts: z.union([z.string(), z.number()]).optional(),
 })
 
 const ContentBlockSchema = z.object({

@@ -4,9 +4,24 @@
 
 Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
+## UI Design
+
+- **Target device: Tesla car screen.** All UI must be large, bold, and easy to tap — think CarPlay / automotive style.
+- Use oversized text (`text-3xl` minimum for body, `text-6xl` for headings), large buttons (`py-6 px-16`, `text-4xl`), and generous spacing (`gap-12`, `p-12`).
+- Dark background (`#000`), white text. Keep it high-contrast and glanceable.
+- Rounded corners on interactive elements (`rounded-2xl` for buttons).
+- No tiny controls, no dense layouts. Every tap target should be easy to hit without looking.
+
+## Navigation
+
+- Screen navigation uses the `Screen` enum in `src/view-models/screen.ts`.
+- The current screen is tracked by `RootViewModel.screen`.
+- `app.tsx` switches on the screen value to render the correct screen component.
+- Screen components live in `src/screens/`.
+
 ## Naming Conventions
 
-- **All filenames use dash-case** (e.g. `root-view-model.ts`, `claw-client.ts`, `app.tsx`). No PascalCase or camelCase filenames.
+- **All filenames use dash-case** (e.g. `root-view-model.ts`, `claw-client.ts`, `welcome-screen.tsx`). No PascalCase or camelCase filenames.
 
 ## Tech Stack
 
@@ -54,9 +69,14 @@ src/
     root-view-model.ts       # Root MobX view model
     recording-view-model.ts  # Recording state
     view-model-context.ts    # React context + useViewModel hook
-  app.tsx                    # Main app component
+    screen.ts                # Screen enum
+  screens/
+    welcome-screen.tsx       # Disclaimer / acceptance screen
+    home-screen.tsx          # Main screen with mic button
+  app.tsx                    # Screen router
   main.tsx                   # Entry point, sets up providers
 ```
 
 - `src/lib/` — service classes, clients, utilities
-- `src/view-models/` — MobX view models for shared state
+- `src/view-models/` — MobX view models and enums for shared state
+- `src/screens/` — top-level screen components

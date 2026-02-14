@@ -1,20 +1,18 @@
-import { Mic } from 'lucide-react'
 import { observer } from 'mobx-react-lite'
 import { useViewModel } from './view-models/view-model-context'
+import { Screen } from './view-models/screen'
+import { WelcomeScreen } from './screens/welcome-screen'
+import { HomeScreen } from './screens/home-screen'
 
 const App = observer(function App() {
   const vm = useViewModel()
 
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-bold text-gray-800">Hello, Carclaw</h1>
-      {vm.recording.isVisible && (
-        <button className="fixed bottom-6 left-6 w-32 h-32 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-sm flex items-center justify-center cursor-pointer">
-          <Mic size={56} />
-        </button>
-      )}
-    </div>
-  )
+  switch (vm.screen) {
+    case Screen.Welcome:
+      return <WelcomeScreen />
+    case Screen.Home:
+      return <HomeScreen />
+  }
 })
 
 export default App

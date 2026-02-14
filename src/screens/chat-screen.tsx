@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Mic, Square, Loader } from 'lucide-react'
 import { useStore } from '../stores/store-context'
 import { Header } from '../components/header'
@@ -34,7 +35,7 @@ export const ChatScreen = observer(function ChatScreen() {
 
       {session.lastAssistantText && (
         <div className="text-3xl text-gray-200 leading-relaxed prose prose-invert prose-2xl max-w-none">
-          <Markdown>{session.lastAssistantText}</Markdown>
+          <Markdown remarkPlugins={[remarkGfm]}>{session.lastAssistantText}</Markdown>
         </div>
       )}
 

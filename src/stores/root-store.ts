@@ -21,9 +21,18 @@ export class RootStore extends Model({
   client: ClawClient | null = null
 
   protected onInit() {
-    if (this.disclaimerAccepted && this.screen === Screen.Welcome) {
-      this.setScreen(Screen.Setup)
+    if (!this.disclaimerAccepted) {
+      return
     }
+
+    if (!this.token) {
+      this.setScreen(Screen.Setup)
+      return
+    }
+
+    // Has credentials — try connecting
+    this.setScreen(Screen.Setup)
+    this.connect()
   }
 
   persistKeys() {

@@ -8,6 +8,16 @@ import { TextInput } from '../components/text-input'
 export const SetupScreen = observer(function SetupScreen() {
   const store = useStore()
 
+  let statusMessage = '\u00A0'
+  let statusColor = ''
+  if (store.connecting) {
+    statusMessage = 'Connecting...'
+    statusColor = 'text-gray-400'
+  } else if (store.connectError) {
+    statusMessage = store.connectError
+    statusColor = 'text-red-400'
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-12 gap-10">
       <Title>Connect</Title>
@@ -16,12 +26,8 @@ export const SetupScreen = observer(function SetupScreen() {
         <TextInput label="Port" value={store.port} placeholder="18789" onChange={(v) => store.setPort(v)} />
         <TextInput label="Token" value={store.token} placeholder="Enter your auth token" onChange={(v) => store.setToken(v)} />
       </div>
-      {store.connectError && (
-        <Text className="text-red-400">{store.connectError}</Text>
-      )}
-      <BigButton onClick={() => store.connect()}>
-        {store.connecting ? 'Connecting...' : 'Connect'}
-      </BigButton>
+      <Text className={statusColor}>{statusMessage}</Text>
+      <BigButton onClick={() => store.connect()}>Connect</BigButton>
     </div>
   )
 })

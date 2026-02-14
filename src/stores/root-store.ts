@@ -24,20 +24,21 @@ export class RootStore extends Model({
     this.screen = Screen.Setup
   }
 
-  connect() {
+  async connect() {
     this.setConnecting(true)
     this.setConnectError('')
     const url = `ws://${this.host}:${this.port}`
     this.client = new ClawClient(url, this.token)
-    this.client.connect().then(
-      () => {
-        this.setConnecting(false)
-        this.setScreen(Screen.Home)
-      },
-      (err: Error) => {
-        this.setConnecting(false)
-        this.setConnectError(err.message)
-      },
-    )
+    try {
+      await Promise.all([
+        this.client.connect(),
+        new Promise((r) => setTimeout(r, 1000)),
+      ])
+      this.setConnecting(false)
+      this.setScreen(Screen.Home)
+    } catch (err) {
+      this.setConnecting(false)
+      this.setConnectError(err instanceof Error ? err.message : 'Connection failed')
+    }
   }
 }

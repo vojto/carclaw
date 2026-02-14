@@ -9,6 +9,7 @@ export enum Screen {
 
 @model('carclaw/RootStore')
 export class RootStore extends Model({
+  disclaimerAccepted: prop<boolean>(false).withSetter(),
   screen: prop<string>(Screen.Welcome).withSetter(),
   host: prop<string>('127.0.0.1').withSetter(),
   port: prop<string>('18789').withSetter(),
@@ -19,12 +20,19 @@ export class RootStore extends Model({
 }) {
   client: ClawClient | null = null
 
+  protected onInit() {
+    if (this.disclaimerAccepted && this.screen === Screen.Welcome) {
+      this.setScreen(Screen.Setup)
+    }
+  }
+
   persistKeys() {
-    return ['host', 'port', 'token']
+    return ['disclaimerAccepted', 'host', 'port', 'token']
   }
 
   @modelAction
   acceptDisclaimer() {
+    this.disclaimerAccepted = true
     this.screen = Screen.Setup
   }
 

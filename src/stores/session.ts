@@ -56,6 +56,7 @@ function wrapMessage(userText: string): string {
 @model('carclaw/Session')
 export class Session extends Model({
   key: prop<string>(),
+  kind: prop<string>(''),
   displayName: prop<string>(''),
   derivedTitle: prop<string>(''),
   lastMessagePreview: prop<string>(''),
@@ -67,7 +68,7 @@ export class Session extends Model({
   private recorder: AudioRecorder | null = null
 
   persistKeys() {
-    return ['key', 'displayName', 'derivedTitle', 'lastMessagePreview', 'lastAssistantText', 'updatedAt']
+    return ['key', 'kind', 'displayName', 'derivedTitle', 'lastMessagePreview', 'lastAssistantText', 'updatedAt']
   }
 
   private get root(): RootStore {
@@ -76,8 +77,13 @@ export class Session extends Model({
 
   // ─── Server Sync ───────────────────────────────────────────
 
+  get preview(): string {
+    return extractTtsContent(this.lastMessagePreview)
+  }
+
   @modelAction
-  mergeFromServer(data: { displayName?: string; derivedTitle?: string; lastMessagePreview?: string; updatedAt?: string }) {
+  mergeFromServer(data: { kind?: string; displayName?: string; derivedTitle?: string; lastMessagePreview?: string; updatedAt?: string }) {
+    if (data.kind !== undefined) this.kind = data.kind
     if (data.displayName !== undefined) this.displayName = data.displayName
     if (data.derivedTitle !== undefined) this.derivedTitle = data.derivedTitle
     if (data.lastMessagePreview !== undefined) this.lastMessagePreview = data.lastMessagePreview

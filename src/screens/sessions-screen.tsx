@@ -20,16 +20,16 @@ export const SessionsScreen = observer(function SessionsScreen() {
     <div className="min-h-screen p-12 flex flex-col gap-8">
       <Header>Sessions</Header>
 
-      {sessionsStore.loading && sessionsStore.sessions.length === 0 && (
+      {sessionsStore.loading && sessionsStore.visibleSessions.length === 0 && (
         <div className="text-3xl text-gray-400">Loading...</div>
       )}
 
       <div className="flex flex-col gap-4">
-        {sessionsStore.sessions.map((s) => (
+        {sessionsStore.visibleSessions.map((s) => (
           <ListItem
             key={s.key}
             title={s.displayName || s.derivedTitle || s.key}
-            subtitle={s.lastMessagePreview}
+            subtitle={s.preview}
             onClick={() => handleSelect(s.key)}
           />
         ))}

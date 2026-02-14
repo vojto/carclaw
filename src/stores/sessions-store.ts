@@ -18,6 +18,10 @@ export class SessionsStore extends Model({
 
   // ─── Lookup ────────────────────────────────────────────────
 
+  get visibleSessions(): Session[] {
+    return this.sessions.filter((s) => s.kind !== 'cron')
+  }
+
   findSession(key: string): Session | undefined {
     return this.sessions.find((s) => s.key === key)
   }
@@ -30,6 +34,7 @@ export class SessionsStore extends Model({
       const existing = this.sessions.find((s) => s.key === row.key)
       if (existing) {
         existing.mergeFromServer({
+          kind: row.kind ?? '',
           displayName: row.displayName ?? '',
           derivedTitle: row.derivedTitle ?? '',
           lastMessagePreview: row.lastMessagePreview ?? '',
@@ -39,6 +44,7 @@ export class SessionsStore extends Model({
         this.sessions.push(
           new Session({
             key: row.key,
+            kind: row.kind ?? '',
             displayName: row.displayName ?? '',
             derivedTitle: row.derivedTitle ?? '',
             lastMessagePreview: row.lastMessagePreview ?? '',

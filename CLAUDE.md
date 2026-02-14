@@ -48,7 +48,7 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
 - Use `@model('carclaw/ModelName')` decorator on store classes.
 - Extend `Model({...})` with `prop<T>()` / `prop(default)` for observable, snapshotable properties.
-- Use `@modelAction` for methods that mutate store state.
+- Use `.withSetter()` on props instead of writing manual setter actions. Only use `@modelAction` for methods with logic beyond a simple set.
 - Non-serializable state (like WebSocket clients) should be plain class properties, not `prop`.
 - Wrap **every** React component that reads store state with the `observer()` HOC from `mobx-react-lite`.
 

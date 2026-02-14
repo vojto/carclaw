@@ -9,49 +9,19 @@ export enum Screen {
 
 @model('carclaw/RootStore')
 export class RootStore extends Model({
-  screen: prop<string>(Screen.Welcome),
-  host: prop<string>('127.0.0.1'),
-  port: prop<string>('18789'),
-  token: prop<string>(''),
-  connecting: prop<boolean>(false),
-  connectError: prop<string>(''),
-  recordingVisible: prop<boolean>(false),
+  screen: prop<string>(Screen.Welcome).withSetter(),
+  host: prop<string>('127.0.0.1').withSetter(),
+  port: prop<string>('18789').withSetter(),
+  token: prop<string>('').withSetter(),
+  connecting: prop<boolean>(false).withSetter(),
+  connectError: prop<string>('').withSetter(),
+  recordingVisible: prop<boolean>(false).withSetter(),
 }) {
   client: ClawClient | null = null
 
   @modelAction
   acceptDisclaimer() {
     this.screen = Screen.Setup
-  }
-
-  @modelAction
-  setHost(value: string) {
-    this.host = value
-  }
-
-  @modelAction
-  setPort(value: string) {
-    this.port = value
-  }
-
-  @modelAction
-  setToken(value: string) {
-    this.token = value
-  }
-
-  @modelAction
-  setScreen(screen: Screen) {
-    this.screen = screen
-  }
-
-  @modelAction
-  setConnecting(value: boolean) {
-    this.connecting = value
-  }
-
-  @modelAction
-  setConnectError(value: string) {
-    this.connectError = value
   }
 
   connect() {

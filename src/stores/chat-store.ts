@@ -11,6 +11,21 @@ function extractText(message?: { content: { type: string; text?: string }[] }): 
     .join('\n')
 }
 
+async function speak(text: string) {
+  const res = await fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  })
+  if (!res.ok) return
+
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const audio = new Audio(url)
+  audio.onended = () => URL.revokeObjectURL(url)
+  await audio.play()
+}
+
 @model('carclaw/ChatStore')
 export class ChatStore extends Model({
   loading: prop<boolean>(false).withSetter(),
@@ -63,6 +78,12 @@ export class ChatStore extends Model({
         if (text) {
           this.setLastAssistantText(text)
         }
+      }
+
+      // Speak the final response
+      if (payload.state === 'final') {
+        const text = extractText(payload.message)
+        if (text) speak(text)
       }
     })
   }

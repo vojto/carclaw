@@ -6,7 +6,7 @@ type Bindings = {
 }
 
 const GROQ_TRANSCRIPTION_URL = 'https://api.groq.com/openai/v1/audio/transcriptions'
-const ELEVENLABS_VOICE_ID = 'f218e5pATi8cBqEEIGBU'
+const ELEVENLABS_VOICE_ID = 'UgBBYS2sOqTuMpoF3BR0'
 const ELEVENLABS_TTS_URL = `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`
 
 const app = new Hono<{ Bindings: Bindings }>()

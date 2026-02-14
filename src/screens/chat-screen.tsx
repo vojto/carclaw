@@ -26,18 +26,22 @@ export const ChatScreen = observer(function ChatScreen() {
   }
 
   return (
-    <div className="min-h-screen p-12 flex flex-col gap-8">
-      <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
+    <div className="h-screen flex flex-col">
+      <div className="p-12 pb-0">
+        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
+      </div>
 
-      {session.loading && !session.lastAssistantText && (
-        <div className="text-3xl text-gray-400">Loading...</div>
-      )}
+      <div className="flex-1 flex items-center justify-center p-12">
+        {session.loading && !session.lastAssistantText && (
+          <div className="text-3xl text-gray-400">Loading...</div>
+        )}
 
-      {session.lastAssistantText && (
-        <div className="text-3xl text-gray-200 leading-relaxed prose prose-invert prose-2xl max-w-none">
-          <Markdown remarkPlugins={[remarkGfm]}>{session.lastAssistantText}</Markdown>
-        </div>
-      )}
+        {session.lastAssistantText && (
+          <div className="text-3xl text-gray-200 leading-relaxed prose prose-invert prose-2xl max-w-none text-center">
+            <Markdown remarkPlugins={[remarkGfm]}>{session.lastAssistantText}</Markdown>
+          </div>
+        )}
+      </div>
 
       <button
         onClick={() => session.toggleRecording()}

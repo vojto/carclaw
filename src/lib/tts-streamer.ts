@@ -101,6 +101,8 @@ export class TtsStreamer {
     console.log('[tts] close')
     this.ws?.close()
     this.ws = null
+    this.audioCtx?.close()
+    this.audioCtx = null
   }
 
   // ─── Audio Playback ──────────────────────────────────────

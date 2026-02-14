@@ -235,6 +235,12 @@ export class Session extends Model({
   }
 
   async startRecording() {
+    // Stop any in-progress TTS playback
+    if (this.ttsStreamer) {
+      this.ttsStreamer.close()
+      this.ttsStreamer = null
+    }
+
     this.recorder = new AudioRecorder()
     await this.recorder.start()
     this.setIsRecording(true)

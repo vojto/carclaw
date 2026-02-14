@@ -13,6 +13,8 @@ export class RootStore extends Model({
   host: prop<string>('127.0.0.1'),
   port: prop<string>('18789'),
   token: prop<string>(''),
+  connecting: prop<boolean>(false),
+  connectError: prop<string>(''),
   recordingVisible: prop<boolean>(false),
 }) {
   client: ClawClient | null = null
@@ -42,11 +44,30 @@ export class RootStore extends Model({
     this.screen = screen
   }
 
+  @modelAction
+  setConnecting(value: boolean) {
+    this.connecting = value
+  }
+
+  @modelAction
+  setConnectError(value: string) {
+    this.connectError = value
+  }
+
   connect() {
+    this.setConnecting(true)
+    this.setConnectError('')
     const url = `ws://${this.host}:${this.port}`
     this.client = new ClawClient(url, this.token)
-    this.client.connect().then(() => {
-      this.setScreen(Screen.Home)
-    })
+    this.client.connect().then(
+      () => {
+        this.setConnecting(false)
+        this.setScreen(Screen.Home)
+      },
+      (err: Error) => {
+        this.setConnecting(false)
+        this.setConnectError(err.message)
+      },
+    )
   }
 }

@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../stores/store-context'
 import { Title } from '../components/title'
+import { Text } from '../components/text'
 import { BigButton } from '../components/big-button'
 import { TextInput } from '../components/text-input'
 
@@ -15,7 +16,12 @@ export const SetupScreen = observer(function SetupScreen() {
         <TextInput label="Port" value={store.port} placeholder="18789" onChange={(v) => store.setPort(v)} />
         <TextInput label="Token" value={store.token} placeholder="Enter your auth token" onChange={(v) => store.setToken(v)} />
       </div>
-      <BigButton onClick={() => store.connect()}>Connect</BigButton>
+      {store.connectError && (
+        <Text className="text-red-400">{store.connectError}</Text>
+      )}
+      <BigButton onClick={() => store.connect()}>
+        {store.connecting ? 'Connecting...' : 'Connect'}
+      </BigButton>
     </div>
   )
 })

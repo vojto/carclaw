@@ -4,6 +4,10 @@
 
 Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
+## Workflow
+
+- **Auto-commit**: After finishing a chunk of work, automatically commit and push. Don't wait for the user to ask. Keep commits small and focused.
+
 ## UI Design
 
 - **Target device: Tesla car screen.** All UI must be large, bold, and easy to tap — think CarPlay / automotive style.

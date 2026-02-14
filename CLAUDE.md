@@ -41,6 +41,10 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 - **Lifecycle goes first** — `open()`/`close()`, `connect()`/`disconnect()`, or similar mount/unmount pairs always appear as the first group.
 - Other groups depend on the class (e.g. Data, Recording, Authentication, Internal). Keep groups logical and consistent.
 
+## Coding Style
+
+- **Prefer `async`/`await` over `.then()`/`.catch()` callbacks.** Use `try`/`catch`/`finally` for error handling.
+
 ## Naming Conventions
 
 - **All filenames use dash-case** (e.g. `root-store.ts`, `claw-client.ts`, `welcome-screen.tsx`). No PascalCase or camelCase filenames.

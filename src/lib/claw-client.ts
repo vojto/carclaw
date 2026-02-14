@@ -75,6 +75,7 @@ export class ClawClient {
 
       ws.onmessage = (ev) => {
         const msg = JSON.parse(ev.data)
+        console.log('[claw] ◀', msg)
 
         if (msg.type === 'event' && msg.event === 'connect.challenge') {
           this.handleChallenge(resolve, reject)
@@ -211,6 +212,7 @@ export class ClawClient {
   // ─── Internal ────────────────────────────────────────────────
 
   private send(msg: unknown) {
+    console.log('[claw] ▶', msg)
     this.ws?.send(JSON.stringify(msg))
   }
 

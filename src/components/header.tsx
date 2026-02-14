@@ -4,9 +4,10 @@ import { ArrowLeft } from 'lucide-react'
 interface HeaderProps {
   children: ReactNode
   onBack?: () => void
+  action?: ReactNode
 }
 
-export function Header({ children, onBack }: HeaderProps) {
+export function Header({ children, onBack, action }: HeaderProps) {
   return (
     <div className="flex items-center gap-6">
       {onBack ? (
@@ -22,7 +23,11 @@ export function Header({ children, onBack }: HeaderProps) {
       <h1 className="text-6xl font-bold text-white text-center flex-1">
         {children}
       </h1>
-      <div className="w-32 h-32 shrink-0" />
+      {action ? (
+        <div className="shrink-0">{action}</div>
+      ) : (
+        <div className="w-32 h-32 shrink-0" />
+      )}
     </div>
   )
 }

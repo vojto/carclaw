@@ -26,6 +26,11 @@ export class SessionsStore extends Model({
     return this.sessions.find((s) => s.key === key)
   }
 
+  @modelAction
+  clearSessions() {
+    this.sessions = []
+  }
+
   // ─── Server Sync ──────────────────────────────────────────
 
   @modelAction

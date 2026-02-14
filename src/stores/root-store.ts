@@ -63,6 +63,22 @@ export class RootStore extends Model({
     this.route = { type: 'setup' }
   }
 
+  // ─── Logout ─────────────────────────────────────────────
+
+  @modelAction
+  logout() {
+    this.chatUnsubscribe?.()
+    this.chatUnsubscribe = null
+    this.client?.disconnect()
+    this.client = null
+    this.connected = false
+    this.host = '127.0.0.1'
+    this.port = '18789'
+    this.token = ''
+    this.sessionsStore.clearSessions()
+    this.route = { type: 'setup' }
+  }
+
   // ─── Connection ───────────────────────────────────────────
 
   async connectSilently() {

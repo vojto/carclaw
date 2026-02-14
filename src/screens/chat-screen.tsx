@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Mic, Square, Loader } from 'lucide-react'
+import { Mic, Square } from 'lucide-react'
 import { useStore } from '../stores/store-context'
 import { Header } from '../components/header'
 
@@ -45,18 +45,13 @@ export const ChatScreen = observer(function ChatScreen() {
 
       <button
         onClick={() => session.toggleRecording()}
-        disabled={session.transcribing}
         className={`fixed bottom-8 left-8 w-32 h-32 text-white rounded-full shadow-sm flex items-center justify-center cursor-pointer ${
-          session.transcribing
-            ? 'bg-gray-600'
-            : session.recording
-              ? 'bg-white active:bg-gray-300'
-              : 'bg-red-500 active:bg-red-700'
+          session.recording
+            ? 'bg-white active:bg-gray-300'
+            : 'bg-red-500 active:bg-red-700'
         }`}
       >
-        {session.transcribing ? (
-          <Loader size={56} className="animate-spin" />
-        ) : session.recording ? (
+        {session.recording ? (
           <Square size={40} fill="black" color="black" />
         ) : (
           <Mic size={56} />

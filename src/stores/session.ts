@@ -63,7 +63,6 @@ export class Session extends Model({
   updatedAt: prop<string>(''),
   loading: prop<boolean>(false).withSetter(),
   recording: prop<boolean>(false).withSetter(),
-  transcribing: prop<boolean>(false).withSetter(),
 }) {
   private recorder: AudioRecorder | null = null
 
@@ -152,7 +151,7 @@ export class Session extends Model({
     const blob = await this.recorder.stop()
     this.recorder = null
     this.setRecording(false)
-    this.setTranscribing(true)
+    this.setLastAssistantText('')
 
     try {
       const form = new FormData()
@@ -168,8 +167,8 @@ export class Session extends Model({
       if (!client) return
 
       await client.sendMessage(this.key, wrapMessage(text.trim()))
-    } finally {
-      this.setTranscribing(false)
+    } catch {
+      // ignore — screen stays empty until next response
     }
   }
 }

@@ -66,6 +66,8 @@ export class ClawClient {
     this.token = token
   }
 
+  // ─── Connection ──────────────────────────────────────────────
+
   connect(): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(this.url)
@@ -110,6 +112,66 @@ export class ClawClient {
     })
   }
 
+  disconnect() {
+    this.ws?.close()
+    this.ws = null
+  }
+
+  // ─── Requests & Events ───────────────────────────────────────
+
+  request(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        reject(new Error('Not connected'))
+        return
+      }
+
+      const id = this.allocId()
+      this.pending.set(id, { resolve, reject: (err) => reject(new Error(err.message)) })
+      this.send({ type: 'req', id, method, params })
+    })
+  }
+
+  on(event: string, handler: EventHandler) {
+    let handlers = this.eventHandlers.get(event)
+    if (!handlers) {
+      handlers = new Set()
+      this.eventHandlers.set(event, handlers)
+    }
+    handlers.add(handler)
+    return () => handlers!.delete(handler)
+  }
+
+  // ─── Sessions ────────────────────────────────────────────────
+
+  async listSessions() {
+    const raw = await this.request('sessions.list', {
+      includeLastMessage: true,
+      includeDerivedTitles: true,
+    })
+    return SessionsListResponseSchema.parse(raw)
+  }
+
+  // ─── Chat ────────────────────────────────────────────────────
+
+  async chatHistory(sessionKey: string, limit?: number) {
+    const params: Record<string, unknown> = { sessionKey }
+    if (limit !== undefined) params.limit = limit
+    const raw = await this.request('chat.history', params)
+    return ChatHistoryResponseSchema.parse(raw)
+  }
+
+  async sendMessage(sessionKey: string, text: string) {
+    const idempotencyKey = crypto.randomUUID()
+    await this.request('chat.send', {
+      sessionKey,
+      idempotencyKey,
+      message: text,
+    })
+  }
+
+  // ─── Internal ────────────────────────────────────────────────
+
   private handleChallenge(
     resolve: (payload: unknown) => void,
     reject: (error: Error) => void,
@@ -144,58 +206,6 @@ export class ClawClient {
         auth: { token },
       },
     })
-  }
-
-  request(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-        reject(new Error('Not connected'))
-        return
-      }
-
-      const id = this.allocId()
-      this.pending.set(id, { resolve, reject: (err) => reject(new Error(err.message)) })
-      this.send({ type: 'req', id, method, params })
-    })
-  }
-
-  on(event: string, handler: EventHandler) {
-    let handlers = this.eventHandlers.get(event)
-    if (!handlers) {
-      handlers = new Set()
-      this.eventHandlers.set(event, handlers)
-    }
-    handlers.add(handler)
-    return () => handlers!.delete(handler)
-  }
-
-  async listSessions() {
-    const raw = await this.request('sessions.list', {
-      includeLastMessage: true,
-      includeDerivedTitles: true,
-    })
-    return SessionsListResponseSchema.parse(raw)
-  }
-
-  async chatHistory(sessionKey: string, limit?: number) {
-    const params: Record<string, unknown> = { sessionKey }
-    if (limit !== undefined) params.limit = limit
-    const raw = await this.request('chat.history', params)
-    return ChatHistoryResponseSchema.parse(raw)
-  }
-
-  async sendMessage(sessionKey: string, text: string) {
-    const idempotencyKey = crypto.randomUUID()
-    await this.request('chat.send', {
-      sessionKey,
-      idempotencyKey,
-      message: text,
-    })
-  }
-
-  disconnect() {
-    this.ws?.close()
-    this.ws = null
   }
 
   private send(msg: unknown) {

@@ -3,7 +3,7 @@ import {
   onSnapshot,
   registerRootStore,
 } from "mobx-keystone";
-import { getFilteredSnapshot } from "./stores/persist";
+import { getFilteredSnapshot } from "./lib/persist";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./app.tsx";

@@ -1,4 +1,3 @@
-const TOKEN_KEY = 'claw_token'
 const DEFAULT_URL = 'ws://127.0.0.1:18789'
 
 type EventHandler = (payload: unknown) => void
@@ -14,21 +13,11 @@ export class ClawClient {
   private pending = new Map<string, PendingRequest>()
   private eventHandlers = new Map<string, Set<EventHandler>>()
   private url: string
+  private token: string
 
-  constructor(url = DEFAULT_URL) {
+  constructor(url = DEFAULT_URL, token = '') {
     this.url = url
-  }
-
-  get token(): string | null {
-    return localStorage.getItem(TOKEN_KEY)
-  }
-
-  set token(value: string | null) {
-    if (value) {
-      localStorage.setItem(TOKEN_KEY, value)
-    } else {
-      localStorage.removeItem(TOKEN_KEY)
-    }
+    this.token = token
   }
 
   connect(): Promise<unknown> {

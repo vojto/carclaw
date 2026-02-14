@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite'
 import { useViewModel } from './view-models/view-model-context'
 import { Screen } from './view-models/root-view-model'
 import { WelcomeScreen } from './screens/welcome-screen'
+import { SetupScreen } from './screens/setup-screen'
 import { HomeScreen } from './screens/home-screen'
 
 const App = observer(function App() {
@@ -10,6 +11,8 @@ const App = observer(function App() {
   switch (vm.screen) {
     case Screen.Welcome:
       return <WelcomeScreen />
+    case Screen.Setup:
+      return <SetupScreen />
     case Screen.Home:
       return <HomeScreen />
   }

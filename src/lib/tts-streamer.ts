@@ -4,24 +4,23 @@ const WS_URL = `wss://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream-inp
 
 export class TtsStreamer {
   private ws: WebSocket | null = null
-  private audioCtx: AudioContext | null = null
-  private nextStartTime = 0
   private isReady = false
   private pendingChunks: string[] = []
-  private decodeQueue: string[] = []
-  private isDecoding = false
+
+  private audio: HTMLAudioElement | null = null
+  private mediaSource: MediaSource | null = null
+  private sourceBuffer: SourceBuffer | null = null
+  private appendQueue: Uint8Array[] = []
 
   onError: ((error: string) => void) | null = null
 
   // ─── Lifecycle ───────────────────────────────────────────
 
   open(apiKey: string) {
-    this.audioCtx = new AudioContext()
-    this.nextStartTime = 0
     this.isReady = false
     this.pendingChunks = []
-    this.decodeQueue = []
-    this.isDecoding = false
+    this.appendQueue = []
+    this.initMediaSource()
 
     const ws = new WebSocket(WS_URL)
     this.ws = ws
@@ -51,7 +50,7 @@ export class TtsStreamer {
 
       if (msg.audio) {
         console.log('[11labs] ◀ audio chunk:', msg.audio.length, 'base64 chars')
-        this.enqueueAudio(msg.audio)
+        this.appendAudio(msg.audio)
       } else {
         console.log('[11labs] ◀', JSON.stringify(msg).slice(0, 200))
       }
@@ -70,6 +69,7 @@ export class TtsStreamer {
     ws.onclose = (ev) => {
       console.log('[11labs] ws closed, code:', ev.code, 'reason:', ev.reason)
       this.isReady = false
+      this.endStream()
     }
   }
 
@@ -94,51 +94,78 @@ export class TtsStreamer {
   close() {
     this.ws?.close()
     this.ws = null
-    this.audioCtx?.close()
-    this.audioCtx = null
+    if (this.audio) {
+      this.audio.pause()
+      this.audio.removeAttribute('src')
+      this.audio.load()
+      this.audio = null
+    }
+    this.mediaSource = null
+    this.sourceBuffer = null
   }
 
-  // ─── Audio Playback ──────────────────────────────────────
+  // ─── Audio Playback (MediaSource) ─────────────────────────
 
-  private enqueueAudio(base64Audio: string) {
-    this.decodeQueue.push(base64Audio)
-    if (!this.isDecoding) {
-      this.processQueue()
+  private initMediaSource() {
+    const mediaSource = new MediaSource()
+    this.mediaSource = mediaSource
+
+    const audio = new Audio()
+    this.audio = audio
+    audio.src = URL.createObjectURL(mediaSource)
+
+    mediaSource.addEventListener('sourceopen', () => {
+      const sb = mediaSource.addSourceBuffer('audio/mpeg')
+      this.sourceBuffer = sb
+      sb.addEventListener('updateend', () => this.processAppendQueue())
+      console.log('[11labs] playback: MediaSource open, SourceBuffer ready')
+      this.processAppendQueue()
+    })
+  }
+
+  private appendAudio(base64Audio: string) {
+    const binary = atob(base64Audio)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    this.appendQueue.push(bytes)
+    this.processAppendQueue()
+  }
+
+  private processAppendQueue() {
+    if (!this.sourceBuffer || this.sourceBuffer.updating || this.appendQueue.length === 0) return
+
+    const chunk = this.appendQueue.shift()!
+    this.sourceBuffer.appendBuffer(chunk)
+    console.log('[11labs] playback: appended', chunk.byteLength, 'bytes, queue:', this.appendQueue.length)
+
+    if (this.audio && this.audio.paused) {
+      this.audio.play().catch(() => {})
     }
   }
 
-  private async processQueue() {
-    this.isDecoding = true
-    while (this.decodeQueue.length > 0) {
-      const base64Audio = this.decodeQueue.shift()!
-      await this.decodeAndPlay(base64Audio)
-    }
-    this.isDecoding = false
-  }
-
-  private async decodeAndPlay(base64Audio: string) {
-    const ctx = this.audioCtx
-    if (!ctx) return
-
-    try {
-      const binary = atob(base64Audio)
-      const bytes = new Uint8Array(binary.length)
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i)
+  private endStream() {
+    if (this.mediaSource && this.mediaSource.readyState === 'open') {
+      // Wait for any pending appends before ending
+      const finish = () => {
+        if (this.sourceBuffer && this.sourceBuffer.updating) {
+          this.sourceBuffer.addEventListener('updateend', finish, { once: true })
+          return
+        }
+        if (this.appendQueue.length > 0) {
+          this.processAppendQueue()
+          if (this.sourceBuffer) {
+            this.sourceBuffer.addEventListener('updateend', finish, { once: true })
+          }
+          return
+        }
+        if (this.mediaSource && this.mediaSource.readyState === 'open') {
+          this.mediaSource.endOfStream()
+          console.log('[11labs] playback: endOfStream')
+        }
       }
-
-      const audioBuffer = await ctx.decodeAudioData(bytes.buffer.slice(0))
-      const source = ctx.createBufferSource()
-      source.buffer = audioBuffer
-      source.connect(ctx.destination)
-
-      const now = ctx.currentTime
-      const startAt = Math.max(now, this.nextStartTime)
-      source.start(startAt)
-      this.nextStartTime = startAt + audioBuffer.duration
-      console.log('[11labs] playback: scheduled', audioBuffer.duration.toFixed(2) + 's, ctx.state:', ctx.state)
-    } catch (err) {
-      console.warn('[11labs] playback: decode failed:', err)
+      finish()
     }
   }
 }

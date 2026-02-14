@@ -22,7 +22,7 @@ export class ChatStore extends Model({
   private recorder: AudioRecorder | null = null
 
   persistKeys() {
-    return [] as string[]
+    return ['lastAssistantText']
   }
 
   private get root(): RootStore {

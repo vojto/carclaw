@@ -3,23 +3,23 @@ import { observer } from 'mobx-react-lite'
 import Markdown from 'react-markdown'
 import { Mic, Square, Loader } from 'lucide-react'
 import { useStore } from '../stores/store-context'
-import { Screen } from '../stores/root-store'
 import { Title } from '../components/title'
 import { BigButton } from '../components/big-button'
 
 export const ChatScreen = observer(function ChatScreen() {
   const store = useStore()
   const { chatStore } = store
+  const sessionKey = store.route.type === 'chat' ? store.route.sessionKey : ''
 
   useEffect(() => {
-    if (!store.selectedSessionKey) return
-    chatStore.open(store.selectedSessionKey)
+    if (!sessionKey || !store.connected) return
+    chatStore.open(sessionKey)
     return () => chatStore.close()
-  }, [chatStore, store.selectedSessionKey])
+  }, [chatStore, sessionKey, store.connected])
 
   return (
     <div className="min-h-screen p-12 flex flex-col gap-8">
-      <BigButton onClick={() => store.setScreen(Screen.Sessions)}>
+      <BigButton onClick={() => store.setRoute({ type: 'sessions' })}>
         Back
       </BigButton>
 

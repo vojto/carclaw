@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../stores/store-context'
-import { Screen } from '../stores/root-store'
 import { Title } from '../components/title'
 import { ListItem } from '../components/list-item'
 
@@ -24,8 +23,7 @@ export const SessionsScreen = observer(function SessionsScreen() {
   }, [store, sessionsStore])
 
   const handleSelect = (key: string) => {
-    store.setSelectedSessionKey(key)
-    store.setScreen(Screen.Chat)
+    store.setRoute({ type: 'chat', sessionKey: key })
   }
 
   return (

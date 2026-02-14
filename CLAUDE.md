@@ -48,6 +48,7 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 ## Naming Conventions
 
 - **All filenames use dash-case** (e.g. `root-store.ts`, `claw-client.ts`, `welcome-screen.tsx`). No PascalCase or camelCase filenames.
+- **Prefix boolean props** with `is`, `was`, `has`, etc. (e.g. `isLoading`, `isRecording`, `isThinking`). Avoid bare adjectives/verbs as boolean names.
 
 ## Tech Stack
 

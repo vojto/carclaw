@@ -32,11 +32,11 @@ export const ChatScreen = observer(function ChatScreen() {
       </div>
 
       <div className="flex-1 flex items-center justify-center p-12">
-        {session.loading && !session.lastAssistantText && (
+        {session.isLoading && !session.lastAssistantText && (
           <div className="text-3xl text-gray-400">Loading...</div>
         )}
 
-        {session.thinking && !session.lastAssistantText && (
+        {session.isThinking && !session.lastAssistantText && (
           <div className="text-3xl text-gray-400">Thinking...</div>
         )}
 
@@ -50,12 +50,12 @@ export const ChatScreen = observer(function ChatScreen() {
       <button
         onClick={() => session.toggleRecording()}
         className={`fixed bottom-8 left-8 w-32 h-32 text-white rounded-full shadow-sm flex items-center justify-center cursor-pointer ${
-          session.recording
+          session.isRecording
             ? 'bg-white active:bg-gray-300'
             : 'bg-red-500 active:bg-red-700'
         }`}
       >
-        {session.recording ? (
+        {session.isRecording ? (
           <Square size={40} fill="black" color="black" />
         ) : (
           <Mic size={56} />

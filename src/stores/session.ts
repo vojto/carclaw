@@ -62,9 +62,9 @@ export class Session extends Model({
   lastMessagePreview: prop<string>(''),
   lastAssistantText: prop<string>(''),
   updatedAt: prop<string>(''),
-  loading: prop<boolean>(false).withSetter(),
-  recording: prop<boolean>(false).withSetter(),
-  thinking: prop<boolean>(false).withSetter(),
+  isLoading: prop<boolean>(false).withSetter(),
+  isRecording: prop<boolean>(false).withSetter(),
+  isThinking: prop<boolean>(false).withSetter(),
 }) {
   private recorder: AudioRecorder | null = null
 
@@ -100,7 +100,7 @@ export class Session extends Model({
     const raw = extractRawText(payload.message)
     if (!raw) return
 
-    this.thinking = false
+    this.isThinking = false
     this.lastAssistantText = extractScreenContent(raw)
     this.lastMessagePreview = extractTtsContent(raw).slice(0, 100)
 
@@ -114,7 +114,7 @@ export class Session extends Model({
     const client = this.root.client
     if (!client) return
 
-    this.setLoading(true)
+    this.setIsLoading(true)
     try {
       const res = await client.chatHistory(this.key)
       const lastAssistant = [...res.messages]
@@ -127,7 +127,7 @@ export class Session extends Model({
     } catch {
       // ignore — cached lastAssistantText is still displayed
     } finally {
-      this.setLoading(false)
+      this.setIsLoading(false)
     }
   }
 
@@ -140,7 +140,7 @@ export class Session extends Model({
 
   @modelAction
   toggleRecording() {
-    if (this.recording) {
+    if (this.isRecording) {
       this.stopRecordingAndSend()
     } else {
       this.startRecording()
@@ -150,7 +150,7 @@ export class Session extends Model({
   async startRecording() {
     this.recorder = new AudioRecorder()
     await this.recorder.start()
-    this.setRecording(true)
+    this.setIsRecording(true)
   }
 
   async stopRecordingAndSend() {
@@ -158,9 +158,9 @@ export class Session extends Model({
 
     const blob = await this.recorder.stop()
     this.recorder = null
-    this.setRecording(false)
+    this.setIsRecording(false)
     this.setLastAssistantText('')
-    this.setThinking(true)
+    this.setIsThinking(true)
 
     try {
       const form = new FormData()

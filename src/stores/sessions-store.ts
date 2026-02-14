@@ -5,7 +5,7 @@ import { Session } from './session'
 
 @model('carclaw/SessionsStore')
 export class SessionsStore extends Model({
-  loading: prop<boolean>(false).withSetter(),
+  isLoading: prop<boolean>(false).withSetter(),
   sessions: prop<Session[]>(() => []),
 }) {
   private get root(): RootStore {
@@ -59,14 +59,14 @@ export class SessionsStore extends Model({
     const client = this.root.client
     if (!client) return
 
-    this.setLoading(true)
+    this.setIsLoading(true)
     try {
       const res = await client.listSessions()
       this.syncFromServerData(res.sessions)
     } catch (err) {
       console.error('[sessions] failed to load:', err)
     } finally {
-      this.setLoading(false)
+      this.setIsLoading(false)
     }
   }
 }

@@ -1,6 +1,6 @@
 # Carclaw
 
-> **Keep this file up to date.** Whenever you learn something useful about this project — conventions, patterns, gotchas — update CLAUDE.md so future sessions benefit. Notes should capture **general principles**, not specific implementation details. Good: "Keep small enums co-located with the view model that uses them." Bad: "The Screen enum lives in root-view-model.ts."
+> **Keep this file up to date.** Whenever you learn something useful about this project — conventions, patterns, gotchas — update CLAUDE.md so future sessions benefit. Notes should capture **general principles**, not specific implementation details. Good: "Keep small enums co-located with the store that uses them." Bad: "The Screen enum lives in root-store.ts."
 
 Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
@@ -15,48 +15,50 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
 ## Navigation
 
-- Keep small enums co-located with the view model that uses them.
-- The current screen is tracked by `RootViewModel.screen`.
+- Keep small enums co-located with the store that uses them.
+- The current screen is tracked by `RootStore.screen`.
 - `app.tsx` switches on the screen value to render the correct screen component.
 - Screen components live in `src/screens/`.
 
 ## Naming Conventions
 
-- **All filenames use dash-case** (e.g. `root-view-model.ts`, `claw-client.ts`, `welcome-screen.tsx`). No PascalCase or camelCase filenames.
+- **All filenames use dash-case** (e.g. `root-store.ts`, `claw-client.ts`, `welcome-screen.tsx`). No PascalCase or camelCase filenames.
 
 ## Tech Stack
 
 - **Vite** + **React** + **TypeScript**
 - **Tailwind CSS** v4 (via `@tailwindcss/vite` plugin)
-- **MobX** for shared state, **mobx-react-lite** for React bindings
+- **mobx-keystone** for state management, **mobx-react-lite** for React bindings
 - **Lucide React** for icons
 - **pnpm** as package manager, **mise** for Node.js version management
 
 ## State Management
 
 - **Component-local state**: Use `useState` for state that only lives in a single component.
-- **Shared state**: Use MobX view models. Never use `useState` for state shared between components.
+- **Shared state**: Use mobx-keystone stores. Never use `useState` for state shared between components.
 
-### MobX View Model Architecture
+### mobx-keystone Store Architecture
 
-- There is a single `RootViewModel` created at the app root and provided via React context (`ViewModelContext`).
-- `RootViewModel` holds sub-models for different concerns (e.g. `RecordingViewModel`).
-- Access the root view model in components with `useViewModel()` from `src/view-models/view-model-context.ts`.
-- Feel free to refactor the view model hierarchy as the app grows — split, merge, or reorganize sub-models to keep things clean.
+- There is a single `RootStore` created at app startup, registered as the root store, and provided via React context (`StoreContext`).
+- Access the store in components with `useStore()` from `src/stores/store-context.ts`.
+- The entire root store is auto-persisted to `localStorage` via `onSnapshot`. On startup, the store is restored from `localStorage` with `fromSnapshot`.
+- Feel free to split into sub-stores as the app grows. Keep everything in `RootStore` until it gets unwieldy.
 
-### MobX Conventions
+### mobx-keystone Conventions
 
-- Use **TypeScript decorators** (`@observable`, `@action`, `@computed`) for marking class members.
-- Always call `makeObservable(this)` in the constructor.
-- Wrap **every** React component that reads observable state with the `observer()` HOC from `mobx-react-lite`.
+- Use `@model('carclaw/ModelName')` decorator on store classes.
+- Extend `Model({...})` with `prop<T>()` / `prop(default)` for observable, snapshotable properties.
+- Use `@modelAction` for methods that mutate store state.
+- Non-serializable state (like WebSocket clients) should be plain class properties, not `prop`.
+- Wrap **every** React component that reads store state with the `observer()` HOC from `mobx-react-lite`.
 
 ```tsx
 import { observer } from 'mobx-react-lite'
-import { useViewModel } from '../view-models/view-model-context'
+import { useStore } from '../stores/store-context'
 
 const MyComponent = observer(function MyComponent() {
-  const vm = useViewModel()
-  return <div>{vm.someModel.someValue}</div>
+  const store = useStore()
+  return <div>{store.someValue}</div>
 })
 ```
 
@@ -66,17 +68,23 @@ const MyComponent = observer(function MyComponent() {
 src/
   lib/
     claw-client.ts           # WebSocket client for OpenClaw
-  view-models/
-    root-view-model.ts       # Root MobX view model
-    recording-view-model.ts  # Recording state
-    view-model-context.ts    # React context + useViewModel hook
+  stores/
+    root-store.ts            # Root mobx-keystone store
+    store-context.ts         # React context + useStore hook
   screens/
     welcome-screen.tsx       # Disclaimer / acceptance screen
+    setup-screen.tsx         # Gateway connection setup
     home-screen.tsx          # Main screen with mic button
+  components/
+    big-button.tsx           # Large tap-friendly button
+    text-input.tsx           # Large text input field
+    title.tsx                # Heading component
+    text.tsx                 # Body text component
   app.tsx                    # Screen router
-  main.tsx                   # Entry point, sets up providers
+  main.tsx                   # Entry point, store setup + persistence
 ```
 
 - `src/lib/` — service classes, clients, utilities
-- `src/view-models/` — MobX view models and enums for shared state
+- `src/stores/` — mobx-keystone stores
 - `src/screens/` — top-level screen components
+- `src/components/` — reusable UI components

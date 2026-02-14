@@ -1,14 +1,14 @@
 import { observer } from 'mobx-react-lite'
-import { useViewModel } from './view-models/view-model-context'
-import { Screen } from './view-models/root-view-model'
+import { useStore } from './stores/store-context'
+import { Screen } from './stores/root-store'
 import { WelcomeScreen } from './screens/welcome-screen'
 import { SetupScreen } from './screens/setup-screen'
 import { HomeScreen } from './screens/home-screen'
 
 const App = observer(function App() {
-  const vm = useViewModel()
+  const store = useStore()
 
-  switch (vm.screen) {
+  switch (store.screen) {
     case Screen.Welcome:
       return <WelcomeScreen />
     case Screen.Setup:

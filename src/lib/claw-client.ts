@@ -185,7 +185,12 @@ export class ClawClient {
   }
 
   async sendMessage(sessionKey: string, text: string) {
-    await this.request('chat.send', { sessionKey, text })
+    const idempotencyKey = crypto.randomUUID()
+    await this.request('chat.send', {
+      sessionKey,
+      idempotencyKey,
+      message: text,
+    })
   }
 
   disconnect() {

@@ -101,7 +101,7 @@ src/
   main.tsx                   # Entry point, store setup + persistence
 ```
 
-- `src/lib/` — service classes, clients, utilities
+- `src/lib/` — **reusable, domain-agnostic** classes and utilities. Code here should be generic enough to use in other apps (e.g. `AudioRecorder`, `ClawClient`). No imports from `stores/` or app-specific logic.
 - `src/stores/` — mobx-keystone stores
 - `src/screens/` — top-level screen components
 - `src/components/` — reusable UI components

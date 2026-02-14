@@ -167,11 +167,10 @@ export class Session extends Model({
   }
 
   private handleFinal(payload: ChatEventPayload) {
-    // Close TTS streamer
-    if (this.ttsStreamer) {
-      this.ttsStreamer.close()
-      this.ttsStreamer = null
-    }
+    // Don't close the TTS streamer here — ElevenLabs is still sending
+    // audio chunks after we flushed. It will close naturally when done.
+    // Starting a new recording closes it immediately if needed.
+    this.ttsStreamer = null
     this.deltaBuffer = ''
     this.isTtsTagOpen = false
     this.isTtsDone = false

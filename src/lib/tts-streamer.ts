@@ -107,7 +107,12 @@ export class TtsStreamer {
 
   private async playChunk(base64Audio: string) {
     const ctx = this.audioCtx
-    if (!ctx) return
+    if (!ctx) {
+      console.warn('[tts] playChunk: no AudioContext')
+      return
+    }
+
+    console.log('[tts] playChunk: decoding', base64Audio.length, 'base64 chars, ctx.state:', ctx.state)
 
     try {
       const binary = atob(base64Audio)
@@ -116,7 +121,7 @@ export class TtsStreamer {
         bytes[i] = binary.charCodeAt(i)
       }
 
-      const audioBuffer = await ctx.decodeAudioData(bytes.buffer)
+      const audioBuffer = await ctx.decodeAudioData(bytes.buffer.slice(0))
       const source = ctx.createBufferSource()
       source.buffer = audioBuffer
       source.connect(ctx.destination)
@@ -125,8 +130,9 @@ export class TtsStreamer {
       const startAt = Math.max(now, this.nextStartTime)
       source.start(startAt)
       this.nextStartTime = startAt + audioBuffer.duration
+      console.log('[tts] playChunk: scheduled', audioBuffer.duration.toFixed(2), 's at', startAt.toFixed(2))
     } catch (err) {
-      console.warn('[tts] failed to decode audio chunk:', err)
+      console.warn('[tts] playChunk: decode failed:', err)
     }
   }
 }

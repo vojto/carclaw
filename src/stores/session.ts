@@ -58,7 +58,9 @@ export class Session extends Model({
   private ttsStreamer: TtsStreamer | null = null
   private deltaBuffer = ''
   private isTtsTagOpen = false
+  private isTtsDone = false
   private ttsStreamedUpTo = 0
+  private lastDeltaRunId = ''
 
   persistKeys() {
     return ['key', 'kind', 'displayName', 'derivedTitle', 'lastMessagePreview', 'lastAssistantText', 'updatedAt']
@@ -87,6 +89,7 @@ export class Session extends Model({
 
   @modelAction
   handleChatEvent(payload: ChatEventPayload) {
+    console.log('[session] chatEvent state:', payload.state)
     if (payload.state === 'delta') {
       this.handleDelta(payload)
       return
@@ -102,23 +105,39 @@ export class Session extends Model({
 
   private handleDelta(payload: ChatEventPayload) {
     const raw = extractRawText(payload.message)
+    console.log('[session] delta raw:', JSON.stringify(raw).slice(0, 200))
     if (!raw) return
 
-    // Open TTS streamer on first delta
-    if (!this.ttsStreamer) {
+    // Open TTS streamer on first delta of a new run
+    if (!this.ttsStreamer || this.lastDeltaRunId !== payload.runId) {
       const apiKey = this.root.elevenlabsApiKey
-      if (!apiKey) return
+      if (!apiKey) {
+        console.warn('[session] no elevenlabsApiKey, skipping TTS')
+        return
+      }
 
+      // Close previous streamer if switching runs
+      if (this.ttsStreamer) {
+        this.ttsStreamer.flush()
+        this.ttsStreamer.close()
+      }
+
+      console.log('[session] opening TTS streamer for run:', payload.runId)
       const streamer = new TtsStreamer()
       streamer.onError = (err) => this.setTtsError(err)
       streamer.open(apiKey)
       this.ttsStreamer = streamer
       this.deltaBuffer = ''
       this.isTtsTagOpen = false
+      this.isTtsDone = false
       this.ttsStreamedUpTo = 0
+      this.lastDeltaRunId = payload.runId
     }
 
-    this.deltaBuffer += raw
+    // Deltas are cumulative — replace buffer entirely
+    this.deltaBuffer = raw
+    if (this.isTtsDone) return
+    console.log('[session] buffer length:', this.deltaBuffer.length, 'isTtsTagOpen:', this.isTtsTagOpen)
     this.processTtsBuffer()
   }
 
@@ -140,6 +159,7 @@ export class Session extends Model({
       if (remaining) this.ttsStreamer?.sendText(remaining)
       this.ttsStreamedUpTo = closeIdx + 6
       this.isTtsTagOpen = false
+      this.isTtsDone = true
       this.ttsStreamer?.flush()
     } else {
       // Tag still open — stream what we have, leaving a small buffer
@@ -161,7 +181,9 @@ export class Session extends Model({
     }
     this.deltaBuffer = ''
     this.isTtsTagOpen = false
+    this.isTtsDone = false
     this.ttsStreamedUpTo = 0
+    this.lastDeltaRunId = ''
 
     const raw = extractRawText(payload.message)
     if (!raw) return

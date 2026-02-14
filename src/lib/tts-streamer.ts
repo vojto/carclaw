@@ -6,6 +6,8 @@ export class TtsStreamer {
   private ws: WebSocket | null = null
   private audioCtx: AudioContext | null = null
   private nextStartTime = 0
+  private isReady = false
+  private pendingChunks: string[] = []
 
   onError: ((error: string) => void) | null = null
 
@@ -14,11 +16,14 @@ export class TtsStreamer {
   open(apiKey: string) {
     this.audioCtx = new AudioContext()
     this.nextStartTime = 0
+    this.isReady = false
+    this.pendingChunks = []
 
     const ws = new WebSocket(WS_URL)
     this.ws = ws
 
     ws.onopen = () => {
+      console.log('[tts] ws open, sending init')
       ws.send(
         JSON.stringify({
           text: ' ',
@@ -29,36 +34,71 @@ export class TtsStreamer {
           xi_api_key: apiKey,
         })
       )
+      this.isReady = true
+
+      // Flush any chunks that arrived before WS was open
+      for (const chunk of this.pendingChunks) {
+        console.log('[tts] sending queued chunk:', JSON.stringify(chunk).slice(0, 100))
+        ws.send(JSON.stringify({ text: chunk }))
+      }
+      this.pendingChunks = []
     }
 
     ws.onmessage = (ev) => {
       const msg = JSON.parse(ev.data)
 
       if (msg.audio) {
+        console.log('[tts] received audio chunk, length:', msg.audio.length)
         this.playChunk(msg.audio)
       }
 
       if (msg.error) {
+        console.error('[tts] error from server:', msg)
+        this.isReady = false
         this.onError?.(msg.message || msg.error)
+      }
+
+      if (!msg.audio && !msg.error) {
+        console.log('[tts] non-audio message:', JSON.stringify(msg).slice(0, 200))
       }
     }
 
-    ws.onerror = () => {
+    ws.onerror = (ev) => {
+      console.error('[tts] ws error:', ev)
       this.onError?.('ElevenLabs WebSocket connection failed')
+    }
+
+    ws.onclose = (ev) => {
+      console.log('[tts] ws closed, code:', ev.code, 'reason:', ev.reason)
+      this.isReady = false
     }
   }
 
   sendText(chunk: string) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+    if (!this.ws) return
+    if (!this.isReady) {
+      // Only queue if WS is still connecting (readyState 0), not if it closed
+      if (this.ws.readyState === WebSocket.CONNECTING) {
+        console.log('[tts] sendText queued (ws connecting):', JSON.stringify(chunk).slice(0, 100))
+        this.pendingChunks.push(chunk)
+      }
+      return
+    }
+    console.log('[tts] sendText:', JSON.stringify(chunk).slice(0, 100))
     this.ws.send(JSON.stringify({ text: chunk }))
   }
 
   flush() {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.log('[tts] flush skipped, ws not open')
+      return
+    }
+    console.log('[tts] flush (end of stream)')
     this.ws.send(JSON.stringify({ text: '' }))
   }
 
   close() {
+    console.log('[tts] close')
     this.ws?.close()
     this.ws = null
   }
@@ -85,8 +125,8 @@ export class TtsStreamer {
       const startAt = Math.max(now, this.nextStartTime)
       source.start(startAt)
       this.nextStartTime = startAt + audioBuffer.duration
-    } catch {
-      // skip undecodable chunks
+    } catch (err) {
+      console.warn('[tts] failed to decode audio chunk:', err)
     }
   }
 }

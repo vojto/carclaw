@@ -27,6 +27,7 @@ function loadStore(): RootStore {
 
 const store = loadStore();
 registerRootStore(store);
+;(window as any).__store = store;
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 onSnapshot(store, () => {

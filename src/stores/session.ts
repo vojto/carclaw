@@ -64,6 +64,7 @@ export class Session extends Model({
   updatedAt: prop<string>(''),
   loading: prop<boolean>(false).withSetter(),
   recording: prop<boolean>(false).withSetter(),
+  thinking: prop<boolean>(false).withSetter(),
 }) {
   private recorder: AudioRecorder | null = null
 
@@ -99,6 +100,7 @@ export class Session extends Model({
     const raw = extractRawText(payload.message)
     if (!raw) return
 
+    this.thinking = false
     this.lastAssistantText = extractScreenContent(raw)
     this.lastMessagePreview = extractTtsContent(raw).slice(0, 100)
 
@@ -158,6 +160,7 @@ export class Session extends Model({
     this.recorder = null
     this.setRecording(false)
     this.setLastAssistantText('')
+    this.setThinking(true)
 
     try {
       const form = new FormData()

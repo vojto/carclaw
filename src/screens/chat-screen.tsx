@@ -36,6 +36,10 @@ export const ChatScreen = observer(function ChatScreen() {
           <div className="text-3xl text-gray-400">Loading...</div>
         )}
 
+        {session.thinking && !session.lastAssistantText && (
+          <div className="text-3xl text-gray-400">Thinking...</div>
+        )}
+
         {session.lastAssistantText && (
           <div className="text-3xl text-gray-200 leading-relaxed prose prose-invert prose-2xl max-w-none">
             <Markdown remarkPlugins={[remarkGfm]}>{session.lastAssistantText}</Markdown>

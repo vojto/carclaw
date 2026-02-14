@@ -8,6 +8,8 @@ export class TtsStreamer {
   private nextStartTime = 0
   private isReady = false
   private pendingChunks: string[] = []
+  private decodeQueue: string[] = []
+  private isDecoding = false
 
   onError: ((error: string) => void) | null = null
 
@@ -18,6 +20,8 @@ export class TtsStreamer {
     this.nextStartTime = 0
     this.isReady = false
     this.pendingChunks = []
+    this.decodeQueue = []
+    this.isDecoding = false
 
     const ws = new WebSocket(WS_URL)
     this.ws = ws
@@ -47,7 +51,7 @@ export class TtsStreamer {
 
       if (msg.audio) {
         console.log('[11labs] ◀ audio chunk:', msg.audio.length, 'base64 chars')
-        this.playChunk(msg.audio)
+        this.enqueueAudio(msg.audio)
       } else {
         console.log('[11labs] ◀', JSON.stringify(msg).slice(0, 200))
       }
@@ -96,12 +100,25 @@ export class TtsStreamer {
 
   // ─── Audio Playback ──────────────────────────────────────
 
-  private async playChunk(base64Audio: string) {
-    const ctx = this.audioCtx
-    if (!ctx) {
-      console.warn('[11labs] playback: no AudioContext')
-      return
+  private enqueueAudio(base64Audio: string) {
+    this.decodeQueue.push(base64Audio)
+    if (!this.isDecoding) {
+      this.processQueue()
     }
+  }
+
+  private async processQueue() {
+    this.isDecoding = true
+    while (this.decodeQueue.length > 0) {
+      const base64Audio = this.decodeQueue.shift()!
+      await this.decodeAndPlay(base64Audio)
+    }
+    this.isDecoding = false
+  }
+
+  private async decodeAndPlay(base64Audio: string) {
+    const ctx = this.audioCtx
+    if (!ctx) return
 
     try {
       const binary = atob(base64Audio)

@@ -27,6 +27,17 @@ export class RootStore extends Model({
     return this.route.type === 'chat' ? this.route.sessionKey : ''
   }
 
+  get isLocalhost(): boolean {
+    return this.host === '127.0.0.1' || this.host === 'localhost'
+  }
+
+  get wsUrl(): string {
+    if (this.isLocalhost) {
+      return `ws://${this.host}:${this.port}`
+    }
+    return `wss://${this.host}`
+  }
+
   protected onInit() {
     if (!this.disclaimerAccepted) {
       this.setRoute({ type: 'welcome' })
@@ -55,7 +66,7 @@ export class RootStore extends Model({
   // ─── Connection ───────────────────────────────────────────
 
   async connectSilently() {
-    const url = `ws://${this.host}:${this.port}`
+    const url = this.wsUrl
     this.client = new ClawClient(url, this.token)
     try {
       await this.client.connect()
@@ -73,7 +84,7 @@ export class RootStore extends Model({
   async connect() {
     this.setConnecting(true)
     this.setConnectError('')
-    const url = `ws://${this.host}:${this.port}`
+    const url = this.wsUrl
     this.client = new ClawClient(url, this.token)
     try {
       await this.client.connect()

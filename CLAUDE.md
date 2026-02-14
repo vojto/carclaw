@@ -1,6 +1,6 @@
 # Carclaw
 
-> **Keep this file up to date.** Whenever you learn something useful about this project — conventions, patterns, gotchas — update CLAUDE.md so future sessions benefit. Notes should capture **general principles**, not specific implementation details. Good: "Keep small enums co-located with the store that uses them." Bad: "The Screen enum lives in root-store.ts."
+> **Keep this file up to date — proactively.** Whenever you learn something useful about this project — conventions, patterns, gotchas — update CLAUDE.md **in the same commit**, not later. When the user steers you toward a better pattern, capture it immediately. Notes should capture **general principles**, not specific implementation details. Good: "Keep small enums co-located with the store that uses them." Bad: "The Screen enum lives in root-store.ts."
 
 Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 

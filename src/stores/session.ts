@@ -2,6 +2,7 @@ import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
 import { when } from 'mobx'
 import type { ChatEventPayload } from '../lib/claw-client'
 import { AudioRecorder } from '../lib/audio-recorder'
+import { TtsStreamer } from '../lib/tts-streamer'
 import type { RootStore } from './root-store'
 
 const CAR_PROMPT = `I'm using you from my car. Can you reply with such format that you wrap the plain text message you want to play as speech in <tts></tts> and you also include markdown that you wanna display on car screen in <screen></screen>. I'll take care of playing the speech and formatting markdown and showing it to user. Here follows my request:
@@ -35,21 +36,6 @@ function extractTtsContent(text: string): string {
   return extractTagContent(text, 'tts') || text
 }
 
-async function speak(text: string) {
-  const res = await fetch('/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  })
-  if (!res.ok) return
-
-  const blob = await res.blob()
-  const url = URL.createObjectURL(blob)
-  const audio = new Audio(url)
-  audio.onended = () => URL.revokeObjectURL(url)
-  await audio.play()
-}
-
 function wrapMessage(userText: string): string {
   return CAR_PROMPT + userText + '\n```'
 }
@@ -66,8 +52,13 @@ export class Session extends Model({
   isLoading: prop<boolean>(false).withSetter(),
   isRecording: prop<boolean>(false).withSetter(),
   isThinking: prop<boolean>(false).withSetter(),
+  ttsError: prop<string>('').withSetter(),
 }) {
   private recorder: AudioRecorder | null = null
+  private ttsStreamer: TtsStreamer | null = null
+  private deltaBuffer = ''
+  private isTtsTagOpen = false
+  private ttsStreamedUpTo = 0
 
   persistKeys() {
     return ['key', 'kind', 'displayName', 'derivedTitle', 'lastMessagePreview', 'lastAssistantText', 'updatedAt']
@@ -96,7 +87,81 @@ export class Session extends Model({
 
   @modelAction
   handleChatEvent(payload: ChatEventPayload) {
-    if (payload.state !== 'final') return
+    if (payload.state === 'delta') {
+      this.handleDelta(payload)
+      return
+    }
+
+    if (payload.state === 'final') {
+      this.handleFinal(payload)
+      return
+    }
+  }
+
+  // ─── Delta Streaming ──────────────────────────────────────
+
+  private handleDelta(payload: ChatEventPayload) {
+    const raw = extractRawText(payload.message)
+    if (!raw) return
+
+    // Open TTS streamer on first delta
+    if (!this.ttsStreamer) {
+      const apiKey = this.root.elevenlabsApiKey
+      if (!apiKey) return
+
+      const streamer = new TtsStreamer()
+      streamer.onError = (err) => this.setTtsError(err)
+      streamer.open(apiKey)
+      this.ttsStreamer = streamer
+      this.deltaBuffer = ''
+      this.isTtsTagOpen = false
+      this.ttsStreamedUpTo = 0
+    }
+
+    this.deltaBuffer += raw
+    this.processTtsBuffer()
+  }
+
+  private processTtsBuffer() {
+    const buf = this.deltaBuffer
+
+    if (!this.isTtsTagOpen) {
+      const openIdx = buf.indexOf('<tts>')
+      if (openIdx === -1) return
+      this.isTtsTagOpen = true
+      this.ttsStreamedUpTo = openIdx + 5 // after '<tts>'
+    }
+
+    // Stream content inside <tts> tag
+    const closeIdx = buf.indexOf('</tts>', this.ttsStreamedUpTo)
+    if (closeIdx !== -1) {
+      // Tag closed — send remaining content and flush
+      const remaining = buf.slice(this.ttsStreamedUpTo, closeIdx)
+      if (remaining) this.ttsStreamer?.sendText(remaining)
+      this.ttsStreamedUpTo = closeIdx + 6
+      this.isTtsTagOpen = false
+      this.ttsStreamer?.flush()
+    } else {
+      // Tag still open — stream what we have, leaving a small buffer
+      // to avoid splitting '</tts>' across chunks
+      const safeEnd = buf.length - 6
+      if (safeEnd > this.ttsStreamedUpTo) {
+        const chunk = buf.slice(this.ttsStreamedUpTo, safeEnd)
+        if (chunk) this.ttsStreamer?.sendText(chunk)
+        this.ttsStreamedUpTo = safeEnd
+      }
+    }
+  }
+
+  private handleFinal(payload: ChatEventPayload) {
+    // Close TTS streamer
+    if (this.ttsStreamer) {
+      this.ttsStreamer.close()
+      this.ttsStreamer = null
+    }
+    this.deltaBuffer = ''
+    this.isTtsTagOpen = false
+    this.ttsStreamedUpTo = 0
 
     const raw = extractRawText(payload.message)
     if (!raw) return
@@ -104,9 +169,6 @@ export class Session extends Model({
     this.isThinking = false
     this.lastAssistantText = extractScreenContent(raw)
     this.lastMessagePreview = extractTtsContent(raw).slice(0, 100)
-
-    const tts = extractTtsContent(raw)
-    if (tts) speak(tts)
   }
 
   // ─── History ──────────────────────────────────────────────
@@ -164,6 +226,7 @@ export class Session extends Model({
     this.setIsRecording(false)
     this.setLastAssistantText('')
     this.setIsThinking(true)
+    this.setTtsError('')
 
     try {
       const form = new FormData()

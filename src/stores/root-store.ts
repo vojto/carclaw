@@ -15,6 +15,7 @@ export class RootStore extends Model({
   host: prop<string>('127.0.0.1').withSetter(),
   port: prop<string>('18789').withSetter(),
   token: prop<string>('').withSetter(),
+  elevenlabsApiKey: prop<string>('').withSetter(),
   connecting: prop<boolean>(false).withSetter(),
   connectError: prop<string>('').withSetter(),
   connected: prop<boolean>(false).withSetter(),
@@ -54,7 +55,7 @@ export class RootStore extends Model({
   }
 
   persistKeys() {
-    return ['disclaimerAccepted', 'host', 'port', 'token', 'route']
+    return ['disclaimerAccepted', 'host', 'port', 'token', 'elevenlabsApiKey', 'route']
   }
 
   @modelAction
@@ -75,6 +76,7 @@ export class RootStore extends Model({
     this.host = '127.0.0.1'
     this.port = '18789'
     this.token = ''
+    this.elevenlabsApiKey = ''
     this.sessionsStore.clearSessions()
     this.route = { type: 'setup' }
   }

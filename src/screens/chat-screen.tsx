@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm'
 import { Mic, Square } from 'lucide-react'
 import { useStore } from '../stores/store-context'
 import { Header } from '../components/header'
+import { BigButton } from '../components/big-button'
 
 export const ChatScreen = observer(function ChatScreen() {
   const store = useStore()
@@ -21,6 +22,16 @@ export const ChatScreen = observer(function ChatScreen() {
       <div className="min-h-screen p-12 flex flex-col gap-8">
         <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
         <div className="text-3xl text-gray-400">Session not found</div>
+      </div>
+    )
+  }
+
+  if (session.ttsError) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center p-12 gap-10">
+        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
+        <div className="text-3xl text-red-400 text-center">{session.ttsError}</div>
+        <BigButton onClick={() => store.logout()}>Sign Out</BigButton>
       </div>
     )
   }

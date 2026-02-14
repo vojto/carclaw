@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 import Markdown from 'react-markdown'
-import { Mic } from 'lucide-react'
+import { Mic, Square, Loader } from 'lucide-react'
 import { useStore } from '../stores/store-context'
 import { Screen } from '../stores/root-store'
 import { Title } from '../components/title'
@@ -25,7 +25,7 @@ export const ChatScreen = observer(function ChatScreen() {
 
       <Title>Chat</Title>
 
-      {chatStore.loading && (
+      {chatStore.loading && !chatStore.lastAssistantText && (
         <div className="text-3xl text-gray-400">Loading...</div>
       )}
 
@@ -35,8 +35,24 @@ export const ChatScreen = observer(function ChatScreen() {
         </div>
       )}
 
-      <button className="fixed bottom-8 left-8 w-32 h-32 bg-red-500 active:bg-red-700 text-white rounded-full shadow-sm flex items-center justify-center cursor-pointer">
-        <Mic size={56} />
+      <button
+        onClick={() => chatStore.toggleRecording()}
+        disabled={chatStore.transcribing}
+        className={`fixed bottom-8 left-8 w-32 h-32 text-white rounded-full shadow-sm flex items-center justify-center cursor-pointer ${
+          chatStore.transcribing
+            ? 'bg-gray-600'
+            : chatStore.recording
+              ? 'bg-white active:bg-gray-300'
+              : 'bg-red-500 active:bg-red-700'
+        }`}
+      >
+        {chatStore.transcribing ? (
+          <Loader size={56} className="animate-spin" />
+        ) : chatStore.recording ? (
+          <Square size={40} fill="black" color="black" />
+        ) : (
+          <Mic size={56} />
+        )}
       </button>
     </div>
   )

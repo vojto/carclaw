@@ -1,5 +1,6 @@
-import { Model, model, prop, getRoot } from 'mobx-keystone'
+import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
 import { ChatEventPayloadSchema } from '../lib/claw-client'
+import { AudioRecorder } from '../lib/audio-recorder'
 import type { RootStore } from './root-store'
 
 function extractText(message?: { content: { type: string; text?: string }[] }): string {
@@ -14,8 +15,11 @@ function extractText(message?: { content: { type: string; text?: string }[] }): 
 export class ChatStore extends Model({
   loading: prop<boolean>(false).withSetter(),
   lastAssistantText: prop<string>('').withSetter(),
+  recording: prop<boolean>(false).withSetter(),
+  transcribing: prop<boolean>(false).withSetter(),
 }) {
   private unsubscribe: (() => void) | null = null
+  private recorder: AudioRecorder | null = null
 
   persistKeys() {
     return [] as string[]
@@ -68,6 +72,50 @@ export class ChatStore extends Model({
     if (this.unsubscribe) {
       this.unsubscribe()
       this.unsubscribe = null
+    }
+  }
+
+  async startRecording() {
+    this.recorder = new AudioRecorder()
+    await this.recorder.start()
+    this.setRecording(true)
+  }
+
+  async stopRecordingAndSend() {
+    if (!this.recorder) return
+
+    const blob = await this.recorder.stop()
+    this.recorder = null
+    this.setRecording(false)
+    this.setTranscribing(true)
+
+    try {
+      const form = new FormData()
+      form.append('file', blob, 'recording.webm')
+
+      const res = await fetch('/api/transcribe', { method: 'POST', body: form })
+      if (!res.ok) throw new Error('Transcription failed')
+
+      const { text } = (await res.json()) as { text: string }
+      if (!text?.trim()) return
+
+      const sessionKey = this.root.selectedSessionKey
+      const client = this.root.client
+      if (!sessionKey || !client) return
+
+      await client.sendMessage(sessionKey, text.trim())
+    } finally {
+      this.setTranscribing(false)
+    }
+  }
+
+  @modelAction
+  toggleRecording() {
+    // Actual async work delegated outside modelAction
+    if (this.recording) {
+      this.stopRecordingAndSend()
+    } else {
+      this.startRecording()
     }
   }
 }

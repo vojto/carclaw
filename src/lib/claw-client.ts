@@ -184,6 +184,10 @@ export class ClawClient {
     return ChatHistoryResponseSchema.parse(raw)
   }
 
+  async sendMessage(sessionKey: string, text: string) {
+    await this.request('chat.send', { sessionKey, text })
+  }
+
   disconnect() {
     this.ws?.close()
     this.ws = null
@@ -198,7 +202,7 @@ export class ClawClient {
   }
 
   private rejectAllPending(reason: string) {
-    for (const [id, req] of this.pending) {
+    for (const [, req] of this.pending) {
       req.reject({ code: 'CLOSED', message: reason })
     }
     this.pending.clear()

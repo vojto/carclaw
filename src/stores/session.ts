@@ -89,22 +89,16 @@ export class Session extends Model({
 
   @modelAction
   handleChatEvent(payload: ChatEventPayload) {
-    if (payload.state === 'delta' || payload.state === 'final') {
-      const raw = extractRawText(payload.message)
-      if (raw) {
-        const screen = extractScreenContent(raw)
-        this.lastAssistantText = screen
-        this.lastMessagePreview = extractTtsContent(raw).slice(0, 100)
-      }
-    }
+    if (payload.state !== 'final') return
 
-    if (payload.state === 'final') {
-      const raw = extractRawText(payload.message)
-      if (raw) {
-        const tts = extractTtsContent(raw)
-        if (tts) speak(tts)
-      }
-    }
+    const raw = extractRawText(payload.message)
+    if (!raw) return
+
+    this.lastAssistantText = extractScreenContent(raw)
+    this.lastMessagePreview = extractTtsContent(raw).slice(0, 100)
+
+    const tts = extractTtsContent(raw)
+    if (tts) speak(tts)
   }
 
   // ─── History ──────────────────────────────────────────────

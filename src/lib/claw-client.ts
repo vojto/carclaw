@@ -38,6 +38,16 @@ const ChatHistoryResponseSchema = z.object({
   messages: z.array(ChatMessageSchema),
 })
 
+export const ChatEventPayloadSchema = z.object({
+  runId: z.string(),
+  sessionKey: z.string(),
+  seq: z.number(),
+  state: z.enum(['delta', 'final', 'aborted', 'error']),
+  message: ChatMessageSchema.optional(),
+  errorMessage: z.string().optional(),
+})
+export type ChatEventPayload = z.infer<typeof ChatEventPayloadSchema>
+
 interface PendingRequest {
   resolve: (payload: unknown) => void
   reject: (error: { code: string; message: string }) => void

@@ -8,6 +8,12 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 
 - **Auto-commit**: After finishing a chunk of work, automatically commit and push. Don't wait for the user to ask. Keep commits small and focused.
 
+## Testing & Credentials
+
+- Credentials live in `.env` (gitignored). Read from `.env` whenever testing via WebSocket (`websocat`) or browser automation (Playwright skill).
+- Variables: `OPENCLAW_TOKEN`, `OPENCLAW_WS_URL` (default `ws://127.0.0.1:18789`).
+- To explore the WebSocket API: `websocat $OPENCLAW_WS_URL` then send JSON messages.
+
 ## UI Design
 
 - **Target device: Tesla car screen.** All UI must be large, bold, and easy to tap — think CarPlay / automotive style.
@@ -47,6 +53,11 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 - Access the store in components with `useStore()` from `src/stores/store-context.ts`.
 - The entire root store is auto-persisted to `localStorage` via `onSnapshot`. On startup, the store is restored from `localStorage` with `fromSnapshot`.
 - Feel free to split into sub-stores as the app grows. Keep everything in `RootStore` until it gets unwieldy.
+
+### Thin Components, Fat Stores
+
+- **Keep React components thin.** `useEffect` hooks should just call a method on the store — all real logic (fetching, subscriptions, data transforms) lives in the mobx-keystone stores.
+- Components render store state and invoke store actions. That's it.
 
 ### mobx-keystone Conventions
 

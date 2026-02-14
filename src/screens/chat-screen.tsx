@@ -12,30 +12,10 @@ export const ChatScreen = observer(function ChatScreen() {
   const { chatStore } = store
 
   useEffect(() => {
-    const client = store.client
-    if (!client || !store.selectedSessionKey) return
-
-    chatStore.setLoading(true)
-    chatStore.setLastAssistantText('')
-
-    client.chatHistory(store.selectedSessionKey).then((res) => {
-      const lastAssistant = [...res.messages]
-        .reverse()
-        .find((m) => m.role === 'assistant')
-
-      if (lastAssistant) {
-        const text = lastAssistant.content
-          .filter((b) => b.type === 'text' && b.text)
-          .map((b) => b.text!)
-          .join('\n')
-        chatStore.setLastAssistantText(text)
-      }
-
-      chatStore.setLoading(false)
-    }).catch(() => {
-      chatStore.setLoading(false)
-    })
-  }, [store, chatStore, store.selectedSessionKey])
+    if (!store.selectedSessionKey) return
+    chatStore.open(store.selectedSessionKey)
+    return () => chatStore.close()
+  }, [chatStore, store.selectedSessionKey])
 
   return (
     <div className="min-h-screen p-12 flex flex-col gap-8">

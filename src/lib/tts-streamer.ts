@@ -23,22 +23,20 @@ export class TtsStreamer {
     this.ws = ws
 
     ws.onopen = () => {
-      console.log('[tts] ws open, sending init')
-      ws.send(
-        JSON.stringify({
-          text: ' ',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.8,
-          },
-          xi_api_key: apiKey,
-        })
-      )
+      const init = {
+        text: ' ',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.8,
+        },
+        xi_api_key: apiKey,
+      }
+      console.log('[11labs] ▶ init', JSON.stringify(init).slice(0, 120))
+      ws.send(JSON.stringify(init))
       this.isReady = true
 
-      // Flush any chunks that arrived before WS was open
       for (const chunk of this.pendingChunks) {
-        console.log('[tts] sending queued chunk:', JSON.stringify(chunk).slice(0, 100))
+        console.log('[11labs] ▶ text (queued):', JSON.stringify(chunk).slice(0, 120))
         ws.send(JSON.stringify({ text: chunk }))
       }
       this.pendingChunks = []
@@ -48,28 +46,25 @@ export class TtsStreamer {
       const msg = JSON.parse(ev.data)
 
       if (msg.audio) {
-        console.log('[tts] received audio chunk, length:', msg.audio.length)
+        console.log('[11labs] ◀ audio chunk:', msg.audio.length, 'base64 chars')
         this.playChunk(msg.audio)
+      } else {
+        console.log('[11labs] ◀', JSON.stringify(msg).slice(0, 200))
       }
 
       if (msg.error) {
-        console.error('[tts] error from server:', msg)
         this.isReady = false
         this.onError?.(msg.message || msg.error)
       }
-
-      if (!msg.audio && !msg.error) {
-        console.log('[tts] non-audio message:', JSON.stringify(msg).slice(0, 200))
-      }
     }
 
-    ws.onerror = (ev) => {
-      console.error('[tts] ws error:', ev)
+    ws.onerror = () => {
+      console.error('[11labs] ws error')
       this.onError?.('ElevenLabs WebSocket connection failed')
     }
 
     ws.onclose = (ev) => {
-      console.log('[tts] ws closed, code:', ev.code, 'reason:', ev.reason)
+      console.log('[11labs] ws closed, code:', ev.code, 'reason:', ev.reason)
       this.isReady = false
     }
   }
@@ -77,28 +72,22 @@ export class TtsStreamer {
   sendText(chunk: string) {
     if (!this.ws) return
     if (!this.isReady) {
-      // Only queue if WS is still connecting (readyState 0), not if it closed
       if (this.ws.readyState === WebSocket.CONNECTING) {
-        console.log('[tts] sendText queued (ws connecting):', JSON.stringify(chunk).slice(0, 100))
         this.pendingChunks.push(chunk)
       }
       return
     }
-    console.log('[tts] sendText:', JSON.stringify(chunk).slice(0, 100))
+    console.log('[11labs] ▶ text:', JSON.stringify(chunk).slice(0, 120))
     this.ws.send(JSON.stringify({ text: chunk }))
   }
 
   flush() {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.log('[tts] flush skipped, ws not open')
-      return
-    }
-    console.log('[tts] flush (end of stream)')
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+    console.log('[11labs] ▶ flush (empty string)')
     this.ws.send(JSON.stringify({ text: '' }))
   }
 
   close() {
-    console.log('[tts] close')
     this.ws?.close()
     this.ws = null
     this.audioCtx?.close()
@@ -110,11 +99,9 @@ export class TtsStreamer {
   private async playChunk(base64Audio: string) {
     const ctx = this.audioCtx
     if (!ctx) {
-      console.warn('[tts] playChunk: no AudioContext')
+      console.warn('[11labs] playback: no AudioContext')
       return
     }
-
-    console.log('[tts] playChunk: decoding', base64Audio.length, 'base64 chars, ctx.state:', ctx.state)
 
     try {
       const binary = atob(base64Audio)
@@ -132,9 +119,9 @@ export class TtsStreamer {
       const startAt = Math.max(now, this.nextStartTime)
       source.start(startAt)
       this.nextStartTime = startAt + audioBuffer.duration
-      console.log('[tts] playChunk: scheduled', audioBuffer.duration.toFixed(2), 's at', startAt.toFixed(2))
+      console.log('[11labs] playback: scheduled', audioBuffer.duration.toFixed(2) + 's, ctx.state:', ctx.state)
     } catch (err) {
-      console.warn('[tts] playChunk: decode failed:', err)
+      console.warn('[11labs] playback: decode failed:', err)
     }
   }
 }

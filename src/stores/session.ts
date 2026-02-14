@@ -89,7 +89,6 @@ export class Session extends Model({
 
   @modelAction
   handleChatEvent(payload: ChatEventPayload) {
-    console.log('[session] chatEvent state:', payload.state)
     if (payload.state === 'delta') {
       this.handleDelta(payload)
       return
@@ -105,16 +104,12 @@ export class Session extends Model({
 
   private handleDelta(payload: ChatEventPayload) {
     const raw = extractRawText(payload.message)
-    console.log('[session] delta raw:', JSON.stringify(raw).slice(0, 200))
     if (!raw) return
 
     // Open TTS streamer on first delta of a new run
     if (!this.ttsStreamer || this.lastDeltaRunId !== payload.runId) {
       const apiKey = this.root.elevenlabsApiKey
-      if (!apiKey) {
-        console.warn('[session] no elevenlabsApiKey, skipping TTS')
-        return
-      }
+      if (!apiKey) return
 
       // Close previous streamer if switching runs
       if (this.ttsStreamer) {
@@ -122,7 +117,6 @@ export class Session extends Model({
         this.ttsStreamer.close()
       }
 
-      console.log('[session] opening TTS streamer for run:', payload.runId)
       const streamer = new TtsStreamer()
       streamer.onError = (err) => this.setTtsError(err)
       streamer.open(apiKey)
@@ -137,7 +131,6 @@ export class Session extends Model({
     // Deltas are cumulative — replace buffer entirely
     this.deltaBuffer = raw
     if (this.isTtsDone) return
-    console.log('[session] buffer length:', this.deltaBuffer.length, 'isTtsTagOpen:', this.isTtsTagOpen)
     this.processTtsBuffer()
   }
 

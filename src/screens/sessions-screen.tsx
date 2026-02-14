@@ -37,14 +37,19 @@ export const SessionsScreen = observer(function SessionsScreen() {
       )}
 
       <div className="flex flex-col gap-4">
-        {sessionsStore.visibleSessions.map((s) => (
-          <ListItem
-            key={s.key}
-            title={s.displayName || s.derivedTitle || s.key}
-            subtitle={s.preview}
-            onClick={() => handleSelect(s.key)}
-          />
-        ))}
+        {sessionsStore.visibleSessions.map((s) => {
+          const agent = store.agentForSession(s.key)
+          const agentLabel = agent ? `${agent.identity?.emoji ?? ''} ${agent.identity?.name ?? agent.name}`.trim() : undefined
+          return (
+            <ListItem
+              key={s.key}
+              title={s.displayName || s.derivedTitle || s.key}
+              subtitle={s.preview}
+              label={agentLabel}
+              onClick={() => handleSelect(s.key)}
+            />
+          )
+        })}
       </div>
     </div>
   )

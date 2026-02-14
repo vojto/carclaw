@@ -22,6 +22,26 @@ const SessionsListResponseSchema = z.object({
   ts: z.union([z.string(), z.number()]).optional(),
 });
 
+const AgentIdentitySchema = z.object({
+  name: z.string().optional(),
+  theme: z.string().optional(),
+  emoji: z.string().optional(),
+});
+
+export const AgentRowSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  identity: AgentIdentitySchema.optional(),
+});
+export type AgentRow = z.infer<typeof AgentRowSchema>;
+
+const AgentsListResponseSchema = z.object({
+  agents: z.array(AgentRowSchema),
+  defaultId: z.string().optional(),
+  mainKey: z.string().optional(),
+  scope: z.string().optional(),
+});
+
 const ContentBlockSchema = z.object({
   type: z.string(),
   text: z.string().optional(),
@@ -184,6 +204,13 @@ export class ClawClient {
     }
     handlers.add(handler);
     return () => handlers!.delete(handler);
+  }
+
+  // ─── Agents ─────────────────────────────────────────────────
+
+  async listAgents() {
+    const raw = await this.request("agents.list", {});
+    return AgentsListResponseSchema.parse(raw);
   }
 
   // ─── Sessions ────────────────────────────────────────────────

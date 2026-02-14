@@ -1,5 +1,6 @@
 import { Model, model, prop, modelAction } from 'mobx-keystone'
 import { ClawClient, ChatEventPayloadSchema } from '../lib/claw-client'
+import type { AgentRow } from '../lib/claw-client'
 import { SessionsStore } from './sessions-store'
 
 export type Route =
@@ -23,9 +24,20 @@ export class RootStore extends Model({
 }) {
   client: ClawClient | null = null
   private chatUnsubscribe: (() => void) | null = null
+  agents: AgentRow[] = []
 
   get selectedSessionKey(): string {
     return this.route.type === 'chat' ? this.route.sessionKey : ''
+  }
+
+  // ─── Agents ─────────────────────────────────────────────
+
+  agentForSession(sessionKey: string): AgentRow | undefined {
+    // Session keys are formatted as "agent:<agentId>:<rest>"
+    const parts = sessionKey.split(':')
+    if (parts[0] !== 'agent' || parts.length < 2) return undefined
+    const agentId = parts[1]
+    return this.agents.find((a) => a.id === agentId)
   }
 
   get isLocalhost(): boolean {
@@ -133,7 +145,18 @@ export class RootStore extends Model({
       }
     })
 
-    // Load initial sessions
+    // Load agents and sessions
+    this.loadAgents()
     this.sessionsStore.syncFromServer()
+  }
+
+  private async loadAgents() {
+    if (!this.client) return
+    try {
+      const res = await this.client.listAgents()
+      this.agents = res.agents
+    } catch (err) {
+      console.error('[agents] failed to load:', err)
+    }
   }
 }

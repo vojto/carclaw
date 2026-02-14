@@ -64,8 +64,8 @@ Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
 - Use `@model('carclaw/ModelName')` decorator on store classes.
 - Extend `Model({...})` with `prop<T>()` / `prop(default)` for observable, snapshotable properties.
 - Use `.withSetter()` on props instead of writing manual setter actions. Only use `@modelAction` for methods with logic beyond a simple set.
-- Non-serializable state (like WebSocket clients) should be plain class properties, not `prop`.
-- **Ephemeral reactive state** (data fetched at runtime that components read but shouldn't be persisted): use `@observable` from `mobx` on the class property + a `@modelAction` setter. Plain class properties are **not** tracked by MobX — `observer()` components won't re-render when they change.
+- **Always use keystone `prop` for reactive state** — even for ephemeral data that isn't persisted. Use `persistKeys()` to control what gets saved. Never use `@observable` from `mobx` as a substitute; it bypasses keystone's snapshot system and creates inconsistency.
+- Non-serializable state (like WebSocket clients, unsubscribe callbacks) should be plain class properties, not `prop`.
 - Wrap **every** React component that reads store state with the `observer()` HOC from `mobx-react-lite`.
 
 ```tsx

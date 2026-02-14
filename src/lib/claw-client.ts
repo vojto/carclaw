@@ -66,7 +66,7 @@ export class ClawClient {
     this.token = token
   }
 
-  // ─── Connection ──────────────────────────────────────────────
+  // ─── Lifecycle ───────────────────────────────────────────────
 
   connect(): Promise<unknown> {
     return new Promise((resolve, reject) => {
@@ -115,6 +115,44 @@ export class ClawClient {
   disconnect() {
     this.ws?.close()
     this.ws = null
+  }
+
+  // ─── Authentication ─────────────────────────────────────────
+
+  private handleChallenge(
+    resolve: (payload: unknown) => void,
+    reject: (error: Error) => void,
+  ) {
+    const token = this.token
+    if (!token) {
+      reject(new Error('No auth token configured'))
+      return
+    }
+
+    const id = this.allocId()
+
+    this.pending.set(id, {
+      resolve,
+      reject: (err) => reject(new Error(err.message)),
+    })
+
+    this.send({
+      type: 'req',
+      id,
+      method: 'connect',
+      params: {
+        minProtocol: 3,
+        maxProtocol: 3,
+        client: {
+          id: 'gateway-client',
+          displayName: 'Carclaw',
+          version: '0.1.0',
+          platform: 'web',
+          mode: 'backend',
+        },
+        auth: { token },
+      },
+    })
   }
 
   // ─── Requests & Events ───────────────────────────────────────
@@ -171,42 +209,6 @@ export class ClawClient {
   }
 
   // ─── Internal ────────────────────────────────────────────────
-
-  private handleChallenge(
-    resolve: (payload: unknown) => void,
-    reject: (error: Error) => void,
-  ) {
-    const token = this.token
-    if (!token) {
-      reject(new Error('No auth token configured'))
-      return
-    }
-
-    const id = this.allocId()
-
-    this.pending.set(id, {
-      resolve,
-      reject: (err) => reject(new Error(err.message)),
-    })
-
-    this.send({
-      type: 'req',
-      id,
-      method: 'connect',
-      params: {
-        minProtocol: 3,
-        maxProtocol: 3,
-        client: {
-          id: 'gateway-client',
-          displayName: 'Carclaw',
-          version: '0.1.0',
-          platform: 'web',
-          mode: 'backend',
-        },
-        auth: { token },
-      },
-    })
-  }
 
   private send(msg: unknown) {
     this.ws?.send(JSON.stringify(msg))

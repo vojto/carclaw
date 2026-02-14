@@ -19,6 +19,10 @@ export class RootStore extends Model({
 }) {
   client: ClawClient | null = null
 
+  persistKeys() {
+    return ['host', 'port', 'token']
+  }
+
   @modelAction
   acceptDisclaimer() {
     this.screen = Screen.Setup

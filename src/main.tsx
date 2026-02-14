@@ -1,4 +1,9 @@
-import { fromSnapshot, onSnapshot, registerRootStore } from "mobx-keystone";
+import {
+  fromSnapshot,
+  onSnapshot,
+  registerRootStore,
+} from "mobx-keystone";
+import { getFilteredSnapshot } from "./stores/persist";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./app.tsx";
@@ -24,10 +29,10 @@ const store = loadStore();
 registerRootStore(store);
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
-onSnapshot(store, (snapshot) => {
+onSnapshot(store, () => {
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(getFilteredSnapshot(store)));
   }, 500);
 });
 

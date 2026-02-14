@@ -9,19 +9,9 @@ export const SessionsScreen = observer(function SessionsScreen() {
   const { sessionsStore } = store
 
   useEffect(() => {
-    if (!store.connected) return
-    const client = store.client
-    if (!client) return
-
-    sessionsStore.setLoading(true)
-    client.listSessions().then((res) => {
-      sessionsStore.setSessions(res.sessions)
-      sessionsStore.setLoading(false)
-    }).catch((err) => {
-      console.error('[sessions] failed to load:', err)
-      sessionsStore.setLoading(false)
-    })
-  }, [store, store.connected, sessionsStore])
+    sessionsStore.open()
+    return () => sessionsStore.close()
+  }, [sessionsStore])
 
   const handleSelect = (key: string) => {
     store.setRoute({ type: 'chat', sessionKey: key })

@@ -12,10 +12,10 @@ export const ChatScreen = observer(function ChatScreen() {
   const sessionKey = store.route.type === 'chat' ? store.route.sessionKey : ''
 
   useEffect(() => {
-    if (!sessionKey || !store.connected) return
+    if (!sessionKey) return
     chatStore.open(sessionKey)
     return () => chatStore.close()
-  }, [chatStore, sessionKey, store.connected])
+  }, [chatStore, sessionKey])
 
   return (
     <div className="min-h-screen p-12 flex flex-col gap-8">

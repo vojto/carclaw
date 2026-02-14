@@ -1,4 +1,5 @@
 import { Model, model, prop, modelAction, getRoot } from 'mobx-keystone'
+import { reaction } from 'mobx'
 import { ChatEventPayloadSchema } from '../lib/claw-client'
 import { AudioRecorder } from '../lib/audio-recorder'
 import type { RootStore } from './root-store'
@@ -34,6 +35,7 @@ export class ChatStore extends Model({
   transcribing: prop<boolean>(false).withSetter(),
 }) {
   private unsubscribe: (() => void) | null = null
+  private disposeReaction: (() => void) | null = null
   private recorder: AudioRecorder | null = null
 
   persistKeys() {
@@ -47,11 +49,39 @@ export class ChatStore extends Model({
   /** Load history + subscribe to live chat events for the given session. */
   open(sessionKey: string) {
     this.close()
-    this.setLoading(true)
-    this.setLastAssistantText('')
 
+    if (this.root.connected) {
+      this.load(sessionKey)
+      return
+    }
+
+    // Wait for connection, then load
+    this.disposeReaction = reaction(
+      () => this.root.connected,
+      (connected) => {
+        if (connected) {
+          this.load(sessionKey)
+          this.disposeReaction?.()
+          this.disposeReaction = null
+        }
+      },
+    )
+  }
+
+  close() {
+    this.disposeReaction?.()
+    this.disposeReaction = null
+    if (this.unsubscribe) {
+      this.unsubscribe()
+      this.unsubscribe = null
+    }
+  }
+
+  private load(sessionKey: string) {
     const client = this.root.client
     if (!client) return
+
+    this.setLoading(true)
 
     // Load latest assistant message from history
     client.chatHistory(sessionKey).then((res) => {
@@ -86,14 +116,6 @@ export class ChatStore extends Model({
         if (text) speak(text)
       }
     })
-  }
-
-  /** Unsubscribe from live chat events. */
-  close() {
-    if (this.unsubscribe) {
-      this.unsubscribe()
-      this.unsubscribe = null
-    }
   }
 
   async startRecording() {

@@ -1,8 +1,12 @@
 # Carclaw
 
-> **Keep this file up to date — proactively.** Whenever you learn something useful about this project — conventions, patterns, gotchas — update CLAUDE.md **in the same commit**, not later. When the user steers you toward a better pattern, capture it immediately. Notes should capture **general principles**, not specific implementation details. Good: "Keep small enums co-located with the store that uses them." Bad: "The Screen enum lives in root-store.ts."
-
 Voice-powered client for OpenClaw, built with Vite + React + TypeScript.
+
+## Self-Improvement
+
+- **CLAUDE.md is the project's living memory.** When you discover a better pattern, get steered in a new direction, or learn a gotcha — update CLAUDE.md **in the same commit** as the code change. Don't wait to be asked.
+- Capture **general principles**, not specific implementation details. Good: "Use `when()` from mobx to wait for async conditions." Bad: "SessionsStore uses `when()` on line 24."
+- When the user corrects your approach, that's a signal to write it down so future sessions don't repeat the mistake.
 
 ## Workflow
 

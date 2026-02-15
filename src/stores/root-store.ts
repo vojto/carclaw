@@ -17,6 +17,7 @@ export class RootStore extends Model({
   port: prop<string>('18789').withSetter(),
   token: prop<string>('').withSetter(),
   elevenlabsApiKey: prop<string>('').withSetter(),
+  groqApiKey: prop<string>('').withSetter(),
   connecting: prop<boolean>(false).withSetter(),
   connectError: prop<string>('').withSetter(),
   connected: prop<boolean>(false).withSetter(),
@@ -67,7 +68,7 @@ export class RootStore extends Model({
   }
 
   persistKeys() {
-    return ['disclaimerAccepted', 'host', 'port', 'token', 'elevenlabsApiKey', 'route']
+    return ['disclaimerAccepted', 'host', 'port', 'token', 'elevenlabsApiKey', 'groqApiKey', 'route']
   }
 
   @modelAction
@@ -89,6 +90,7 @@ export class RootStore extends Model({
     this.port = '18789'
     this.token = ''
     this.elevenlabsApiKey = ''
+    this.groqApiKey = ''
     this.sessionsStore.clearSessions()
     this.route = { type: 'setup' }
   }

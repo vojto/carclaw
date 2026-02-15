@@ -254,10 +254,19 @@ export class Session extends Model({
     this.setTtsError('')
 
     try {
+      const groqApiKey = this.root.groqApiKey
+      if (!groqApiKey) throw new Error('Groq API key not configured')
+
       const form = new FormData()
       form.append('file', blob, 'recording.webm')
+      form.append('model', 'whisper-large-v3-turbo')
+      form.append('response_format', 'verbose_json')
 
-      const res = await fetch('/api/transcribe', { method: 'POST', body: form })
+      const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${groqApiKey}` },
+        body: form,
+      })
       if (!res.ok) throw new Error('Transcription failed')
 
       const { text } = (await res.json()) as { text: string }

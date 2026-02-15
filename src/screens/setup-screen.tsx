@@ -26,6 +26,7 @@ export const SetupScreen = observer(function SetupScreen() {
         <TextInput label="Gateway Host" value={store.host} placeholder="127.0.0.1" onChange={(v) => store.setHost(v)} />
         <TextInput label="Port" value={store.port} placeholder="18789" onChange={(v) => store.setPort(v)} />
         <TextInput label="Token" value={store.token} placeholder="Enter your auth token" onChange={(v) => store.setToken(v)} />
+        <TextInput label="Groq API Key" value={store.groqApiKey} placeholder="Enter your Groq API key" onChange={(v) => store.setGroqApiKey(v)} />
         <TextInput label="ElevenLabs API Key" value={store.elevenlabsApiKey} placeholder="Enter your ElevenLabs API key" onChange={(v) => store.setElevenlabsApiKey(v)} />
       </div>
       <div className="flex items-center gap-4 h-12">

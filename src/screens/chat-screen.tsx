@@ -29,9 +29,8 @@ export const ChatScreen = observer(function ChatScreen() {
   if (session.ttsError) {
     return (
       <div className="h-screen flex flex-col items-center justify-center p-12 gap-10">
-        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
         <div className="text-3xl text-red-400 text-center">{session.ttsError}</div>
-        <BigButton onClick={() => store.logout()}>Sign Out</BigButton>
+        <BigButton onClick={() => session.setTtsError('')}>Ok</BigButton>
       </div>
     )
   }

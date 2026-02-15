@@ -102,9 +102,16 @@ export class Session extends Model({
 
   // ─── Delta Streaming ──────────────────────────────────────
 
+  private get isActiveChat(): boolean {
+    return this.root.selectedSessionKey === this.key
+  }
+
   private handleDelta(payload: ChatEventPayload) {
     const raw = extractRawText(payload.message)
     if (!raw) return
+
+    // Only stream TTS when the user is viewing this session
+    if (!this.isActiveChat) return
 
     // Open TTS streamer on first delta of a new run
     if (!this.ttsStreamer || this.lastDeltaRunId !== payload.runId) {

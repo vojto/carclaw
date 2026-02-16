@@ -238,9 +238,15 @@ export class Session extends Model({
       this.ttsStreamer = null
     }
 
-    this.recorder = new AudioRecorder()
-    await this.recorder.start()
-    this.setIsRecording(true)
+    try {
+      this.recorder = new AudioRecorder()
+      await this.recorder.start()
+      this.setIsRecording(true)
+    } catch (err) {
+      this.recorder = null
+      const msg = err instanceof Error ? err.message : 'Recording failed'
+      this.setTtsError(`Mic error: ${msg}`)
+    }
   }
 
   async stopRecordingAndSend() {
@@ -257,8 +263,17 @@ export class Session extends Model({
       const groqApiKey = this.root.groqApiKey
       if (!groqApiKey) throw new Error('Groq API key not configured')
 
+      // Determine file extension from MIME type for Groq compatibility
+      const mime = blob.type || 'audio/webm'
+      const extMap: Record<string, string> = {
+        'audio/webm': 'webm', 'audio/webm;codecs=opus': 'webm',
+        'audio/ogg;codecs=opus': 'ogg', 'audio/ogg': 'ogg',
+        'audio/mp4': 'mp4', 'audio/wav': 'wav',
+      }
+      const ext = extMap[mime] || 'webm'
+
       const form = new FormData()
-      form.append('file', blob, 'recording.webm')
+      form.append('file', blob, `recording.${ext}`)
       form.append('model', 'whisper-large-v3-turbo')
       form.append('response_format', 'verbose_json')
 

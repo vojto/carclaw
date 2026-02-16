@@ -20,7 +20,7 @@ export const ChatScreen = observer(function ChatScreen() {
   if (!session) {
     return (
       <div className="min-h-screen p-12 flex flex-col gap-8">
-        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
+        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Drive</Header>
         <div className="text-3xl text-gray-400">Session not found</div>
       </div>
     )
@@ -38,7 +38,7 @@ export const ChatScreen = observer(function ChatScreen() {
   return (
     <div className="h-screen flex flex-col">
       <div className="p-12 pb-0">
-        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Chat</Header>
+        <Header onBack={() => store.setRoute({ type: 'sessions' })}>Drive</Header>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-12">
